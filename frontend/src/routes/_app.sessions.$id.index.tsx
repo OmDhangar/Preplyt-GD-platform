@@ -1,0 +1,996 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "@/lib/api";
+import type { Session, User, Attachment } from "@/lib/types";
+import { PageHeader } from "@/components/brand/PageHeader";
+import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { IconCircle } from "@/components/brand/IconCircle";
+
+import { toast } from "sonner";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Play,
+  Square,
+  Trash2,
+  Copy,
+  Users as UsersIcon,
+  RefreshCw,
+  Paperclip,
+  Lock,
+  Plus,
+  Link as LinkIcon,
+  Download,
+  ExternalLink,
+  Calendar,
+  Clock,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export const Route = createFileRoute("/_app/sessions/$id/")({
+  ssr: false,
+  component: SessionDetail,
+});
+
+const lifecycle = [
+  { key: "draft", label: "Draft" },
+  { key: "scheduled", label: "Scheduled" },
+  { key: "active", label: "Active" },
+  { key: "completed", label: "Completed" },
+  { key: "published", label: "Published" },
+];
+
+function SessionDetail() {
+  const { id } = Route.useParams();
+  const { role } = useAuth();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const isStaff = role === "instructor" || role === "admin";
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [loadingStart, setLoadingStart] = useState(false);
+  const [meetUrlInput, setMeetUrlInput] = useState("");
+
+  // Reschedule state
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [newDateInput, setNewDateInput] = useState("");
+  const [newDurationInput, setNewDurationInput] = useState(45);
+  const [loadingReschedule, setLoadingReschedule] = useState(false);
+
+  // Add attachment state
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [attTitle, setAttTitle] = useState("");
+  const [attDesc, setAttDesc] = useState("");
+  const [attUrl, setAttUrl] = useState("");
+  const [attType, setAttType] = useState("Link");
+  const [loadingAttachment, setLoadingAttachment] = useState(false);
+
+  const { data: sessionData } = useQuery({
+    queryKey: ["session", id],
+    queryFn: async () => (await apiGet<{ session: Session }>(`/sessions/${id}`)).data,
+  });
+  const session = sessionData?.session;
+
+  const { data: attachmentsData, error: attachmentsError, refetch: refetchAttachments } = useQuery({
+    queryKey: ["session", id, "attachments"],
+    queryFn: async () => (await apiGet<{ attachments: Attachment[] }>(`/sessions/${id}/attachments`)).data,
+    retry: false,
+  });
+  const attachments = attachmentsData?.attachments || [];
+
+  const reload = () => qc.invalidateQueries({ queryKey: ["session", id] });
+
+  const startAndRedirect = async () => {
+    setLoadingStart(true);
+    try {
+      if (meetUrlInput !== session?.googleMeetUrl) {
+        await apiPatch(`/sessions/${id}`, { googleMeetUrl: meetUrlInput });
+      }
+      await apiPost(`/sessions/${id}/start`);
+      toast.success("Session started");
+      qc.invalidateQueries({ queryKey: ["session", id] });
+      navigate({ to: "/sessions/$id/evaluate", params: { id } });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to start session");
+    } finally {
+      setLoadingStart(false);
+    }
+  };
+  const generateMeetLink = async () => {
+    try {
+      const resp = await apiPost<{ session: Session }>(`/sessions/${id}/google-meet`);
+      const newUrl = resp.session?.googleMeetUrl || "";
+      setMeetUrlInput(newUrl);
+      toast.success("Successfully generated Google Meet URL!");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to generate Google Meet URL.");
+    }
+  };
+  const end = async () => {
+    try { await apiPost(`/sessions/${id}/end`); toast.success("Session ended"); reload(); }
+    catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
+  };
+  const remove = async () => {
+    if (!confirm("Delete this session?")) return;
+    try { await apiDelete(`/sessions/${id}`); toast.success("Deleted"); window.history.back(); }
+    catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
+  };
+  const publish = async () => {
+    try {
+      await apiPost(`/evaluations/sessions/${id}/evaluations/publish`);
+      toast.success("Results published");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed");
+    }
+  };
+
+  const handleReschedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDateInput) {
+      toast.error("Please select a new date and time.");
+      return;
+    }
+    setLoadingReschedule(true);
+    try {
+      await apiPatch(`/sessions/${id}/reschedule`, {
+        newScheduledAt: newDateInput,
+        durationMins: Number(newDurationInput),
+      });
+      toast.success("Session rescheduled successfully");
+      setShowRescheduleModal(false);
+      reload();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to reschedule session");
+    } finally {
+      setLoadingReschedule(false);
+    }
+  };
+
+  const handleAddAttachment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!attTitle || !attUrl) {
+      toast.error("Title and URL are required.");
+      return;
+    }
+    setLoadingAttachment(true);
+    try {
+      await apiPost(`/sessions/${id}/attachments`, {
+        title: attTitle,
+        description: attDesc,
+        fileUrl: attUrl,
+        fileType: attType,
+      });
+      toast.success("Attachment added successfully");
+      setShowAttachmentModal(false);
+      setAttTitle("");
+      setAttDesc("");
+      setAttUrl("");
+      setAttType("Link");
+      refetchAttachments();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to add attachment");
+    } finally {
+      setLoadingAttachment(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm("Are you sure you want to delete this attachment?")) return;
+    try {
+      await apiDelete(`/sessions/${id}/attachments/${attachmentId}`);
+      toast.success("Attachment deleted");
+      refetchAttachments();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to delete attachment");
+    }
+  };
+
+  if (!session) return <div className="text-text-muted-light">Loading…</div>;
+
+  const currentStep = lifecycle.findIndex((l) => l.key === session.status);
+
+  return (
+    <div>
+      <PageHeader
+        title={session.title}
+        subtitle={session.description}
+        pill={<CornerPillBadge>{session.status}</CornerPillBadge>}
+        actions={
+          isStaff && (
+            <div className="flex gap-2">
+              {session.status === "draft" || session.status === "scheduled" ? (
+                <Button
+                  onClick={() => {
+                    setMeetUrlInput(session.googleMeetUrl || "");
+                    setShowStartModal(true);
+                  }}
+                  className="bg-accent-teal hover:bg-accent-teal-bright"
+                >
+                  <Play className="h-4 w-4 mr-1" /> Start
+                </Button>
+              ) : null}
+              {session.status === "active" && (
+                <>
+                  <Button asChild className="bg-accent-teal hover:bg-accent-teal-bright">
+                    <Link to="/sessions/$id/evaluate" params={{ id }}>
+                      Evaluate
+                    </Link>
+                  </Button>
+                  <Button variant="outline" onClick={end}>
+                    <Square className="h-4 w-4 mr-1" /> End
+                  </Button>
+                </>
+              )}
+              {session.status === "completed" && (
+                <Button onClick={publish} className="bg-accent-teal hover:bg-accent-teal-bright">
+                  Publish results
+                </Button>
+              )}
+              {session.status === "draft" && (
+                <Button variant="ghost" onClick={remove}
+                  className="text-accent-red hover:text-accent-red">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )
+        }
+      />
+
+      <section className="bg-surface-light border border-hairline-light rounded-2xl p-6 mb-6 shadow-elegant">
+        <h2 className="font-display text-lg font-semibold mb-5">Lifecycle</h2>
+        <div className="flex items-center flex-wrap gap-2">
+          {lifecycle.map((step, i) => {
+            const done = i < currentStep;
+            const active = i === currentStep;
+            return (
+              <div key={step.key} className="flex items-center">
+                <div className="flex flex-col items-center min-w-[96px]">
+                  <IconCircle
+                    step={i + 1}
+                    tone={done || active ? "teal" : "dark"}
+                  >
+                    <span className="text-xs font-bold">{step.label[0]}</span>
+                  </IconCircle>
+                  <div
+                    className={
+                      "text-[11px] mt-2 font-medium uppercase tracking-wider " +
+                      (active
+                        ? "text-accent-teal"
+                        : done
+                          ? "text-text-on-light"
+                          : "text-text-muted-light")
+                    }
+                  >
+                    {step.label}
+                  </div>
+                </div>
+                {i < lifecycle.length - 1 && (
+                  <div
+                    className={
+                      "hidden md:block h-[2px] w-10 rounded-full mx-1 transition-all " +
+                      (done
+                        ? "bg-gradient-teal shadow-[0_0_8px_rgba(20,184,166,0.5)]"
+                        : "bg-hairline-light")
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <SessionInfoPanel
+            session={session}
+            isStaff={isStaff}
+            onRescheduleClick={() => {
+              setNewDateInput(session.scheduledAt ? session.scheduledAt.substring(0, 16) : "");
+              setNewDurationInput(session.durationMins || 45);
+              setShowRescheduleModal(true);
+            }}
+          />
+          <JoinCodePanel session={session} />
+          {session.googleMeetUrl && (
+            <GoogleMeetPanel session={session} isStaff={isStaff} reload={reload} />
+          )}
+          <AttachmentsPanel
+            attachments={attachments}
+            error={attachmentsError}
+            isStaff={isStaff}
+            onAddClick={() => setShowAttachmentModal(true)}
+            onDeleteClick={handleDeleteAttachment}
+          />
+        </div>
+        <ParticipantsPanel sessionId={id} canManage={isStaff} />
+      </div>
+
+      {showStartModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-hairline-light rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-accent-teal to-accent-teal-bright" />
+            
+            <div className="space-y-2">
+              <h3 className="font-display text-xl font-bold text-text-on-light">
+                Verify Google Meet Setup
+              </h3>
+              <p className="text-sm text-text-muted-light">
+                Please make sure you have started the Google Meet call before beginning the session. Students will access this link to join the GD.
+              </p>
+            </div>
+
+            {/* Premium warning notification */}
+            <div className="bg-amber-50/80 border border-amber-200/60 text-amber-900 rounded-xl p-3.5 text-xs space-y-1.5 leading-relaxed shadow-sm">
+              <div className="font-semibold flex items-center gap-1.5 text-amber-800">
+                <span>⚠️</span> Note on Google Meet links
+              </div>
+              <p className="text-amber-700">
+                The default link is a simulated placeholder. If you click it, Google Meet will show a <strong>"Check your meeting code"</strong> error.
+              </p>
+              <p className="text-amber-700">
+                To host a real Group Discussion, create a meeting on{" "}
+                <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-amber-900">
+                  Google Meet
+                </a>{" "}
+                and paste your real URL below.
+              </p>
+            </div>
+
+            <div className="bg-surface-light rounded-xl p-4 border border-hairline-light space-y-3 text-left">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-accent-teal">
+                Google Meet Room Link
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={meetUrlInput}
+                  onChange={(e) => setMeetUrlInput(e.target.value)}
+                  placeholder="Paste real Google Meet link here..."
+                  className="flex-1 text-sm bg-white"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (meetUrlInput) {
+                      navigator.clipboard.writeText(meetUrlInput);
+                      toast.success("Copied Meet URL");
+                    }
+                  }}
+                  className="flex-shrink-0"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={generateMeetLink}
+                className="w-full text-xs border-accent-teal text-accent-teal hover:bg-accent-teal/5 flex items-center justify-center gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Generate Google Meet URL
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <a
+                href={meetUrlInput || "https://meet.google.com"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-center"
+              >
+                <Button className="w-full bg-accent-teal hover:bg-accent-teal-bright text-white flex items-center justify-center gap-2">
+                  <Play className="h-4 w-4" /> Launch Google Meet
+                </Button>
+              </a>
+              <Button
+                onClick={startAndRedirect}
+                disabled={loadingStart}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white"
+              >
+                {loadingStart ? "Starting..." : "Continue to Evaluation"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowStartModal(false)}
+                className="w-full"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRescheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-hairline-light rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-accent-teal to-accent-teal-bright" />
+            <div className="space-y-2">
+              <h3 className="font-display text-xl font-bold text-text-on-light">
+                Reschedule GD Session
+              </h3>
+              <p className="text-sm text-text-muted-light">
+                Update the session timing. Subscribed participants will automatically receive an email alert with the new details.
+              </p>
+            </div>
+
+            <form onSubmit={handleReschedule} className="space-y-4">
+              <div>
+                <Label htmlFor="newScheduledAt">New Scheduled Date & Time</Label>
+                <Input
+                  id="newScheduledAt"
+                  type="datetime-local"
+                  required
+                  value={newDateInput}
+                  onChange={(e) => setNewDateInput(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="newDuration">Duration (minutes)</Label>
+                <Input
+                  id="newDuration"
+                  type="number"
+                  required
+                  min={15}
+                  max={180}
+                  value={newDurationInput}
+                  onChange={(e) => setNewDurationInput(Number(e.target.value))}
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="submit"
+                  disabled={loadingReschedule}
+                  className="flex-1 bg-accent-teal hover:bg-accent-teal-bright text-white"
+                >
+                  {loadingReschedule ? "Rescheduling..." : "Reschedule Session"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowRescheduleModal(false)}
+                  disabled={loadingReschedule}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAttachmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-hairline-light rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-accent-teal to-accent-teal-bright" />
+            <div className="space-y-2">
+              <h3 className="font-display text-xl font-bold text-text-on-light">
+                Add Attachment
+              </h3>
+              <p className="text-sm text-text-muted-light">
+                Add resources, documents, or websites that registered students can download and refer to.
+              </p>
+            </div>
+
+            <form onSubmit={handleAddAttachment} className="space-y-4">
+              <div>
+                <Label htmlFor="attTitle">Title</Label>
+                <Input
+                  id="attTitle"
+                  placeholder="e.g. Study Material PDF"
+                  required
+                  value={attTitle}
+                  onChange={(e) => setAttTitle(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="attDesc">Description (Optional)</Label>
+                <Input
+                  id="attDesc"
+                  placeholder="Brief description of the handout..."
+                  value={attDesc}
+                  onChange={(e) => setAttDesc(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="attUrl">Resource URL / Link</Label>
+                <Input
+                  id="attUrl"
+                  placeholder="https://example.com/handout.pdf"
+                  required
+                  value={attUrl}
+                  onChange={(e) => setAttUrl(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="attType">Type</Label>
+                <Select
+                  value={attType}
+                  onValueChange={(v) => setAttType(v)}
+                >
+                  <SelectTrigger id="attType" className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PDF">PDF Document</SelectItem>
+                    <SelectItem value="Link">Website Link</SelectItem>
+                    <SelectItem value="Image">Image File</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="submit"
+                  disabled={loadingAttachment}
+                  className="flex-1 bg-accent-teal hover:bg-accent-teal-bright text-white"
+                >
+                  {loadingAttachment ? "Uploading..." : "Add Attachment"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAttachmentModal(false)}
+                  disabled={loadingAttachment}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GoogleMeetPanel({
+  session,
+  isStaff,
+  reload,
+}: {
+  session: Session;
+  isStaff: boolean;
+  reload: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [urlInput, setUrlInput] = useState(session.googleMeetUrl || "");
+  const [loading, setLoading] = useState(false);
+
+  const copy = () => {
+    if (!session.googleMeetUrl) return;
+    navigator.clipboard.writeText(session.googleMeetUrl);
+    toast.success("Copied Google Meet URL");
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await apiPatch(`/sessions/${session._id}`, { googleMeetUrl: urlInput });
+      toast.success("Google Meet URL updated");
+      setIsEditing(false);
+      reload();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to update URL");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="bg-white border rounded-2xl p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display font-semibold flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-accent-teal animate-pulse" />
+          Google Meet Room
+        </h2>
+        {isStaff && !isEditing && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setUrlInput(session.googleMeetUrl || "");
+              setIsEditing(true);
+            }}
+            className="text-xs text-accent-teal hover:text-accent-teal-bright"
+          >
+            Edit Link
+          </Button>
+        )}
+      </div>
+
+      {isEditing ? (
+        <div className="space-y-3 text-left">
+          <div className="flex gap-2">
+            <Input
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              placeholder="Paste real Google Meet link here..."
+              className="flex-1 text-sm bg-white"
+            />
+            <Button
+              onClick={handleSave}
+              disabled={loading}
+              className="bg-accent-teal hover:bg-accent-teal-bright text-white"
+            >
+              {loading ? "Saving..." : "Save"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditing(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const resp = await apiPost<{ session: Session }>(`/sessions/${session._id}/google-meet`);
+                const newUrl = resp.session?.googleMeetUrl || "";
+                setUrlInput(newUrl);
+                toast.success("Successfully generated Google Meet URL!");
+                setIsEditing(false);
+                reload();
+              } catch (e) {
+                toast.error(e instanceof ApiError ? e.message : "Failed to generate Google Meet URL.");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="text-xs border-accent-teal text-accent-teal hover:bg-accent-teal/5 flex items-center justify-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Generate Google Meet URL
+          </Button>
+          <p className="text-[11px] text-text-muted-light">
+            Paste a valid Google Meet link (e.g. https://meet.google.com/abc-defg-hij) or generate one using the central Google Calendar account.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <a
+            href={session.googleMeetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 bg-surface-light hover:bg-slate-100 border text-accent-teal hover:text-accent-teal-bright font-medium px-4 py-2.5 rounded-lg text-sm transition-colors break-all truncate flex items-center justify-between"
+          >
+            <span>{session.googleMeetUrl}</span>
+          </a>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={copy}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <a href={session.googleMeetUrl} target="_blank" rel="noopener noreferrer">
+              <Button className="bg-accent-teal hover:bg-accent-teal-bright text-white">
+                Join Meet
+              </Button>
+            </a>
+          </div>
+        </div>
+      )}
+      <p className="text-xs text-text-muted-light mt-3">
+        {isStaff
+          ? "Ensure your microphone and camera are ready before starting the evaluation."
+          : "Join the video call using this link when the session starts."}
+      </p>
+    </section>
+  );
+}
+
+function JoinCodePanel({ session }: { session: Session }) {
+  const copy = () => {
+    if (!session.joinCode) return;
+    navigator.clipboard.writeText(session.joinCode);
+    toast.success("Copied join code");
+  };
+  return (
+    <section className="bg-white border rounded-2xl p-5">
+      <h2 className="font-display font-semibold mb-3">Join code</h2>
+      {session.joinCode ? (
+        <div className="flex items-center gap-3">
+          <code className="text-3xl font-bold tracking-widest text-accent-teal bg-surface-light px-4 py-2 rounded-lg">
+            {session.joinCode}
+          </code>
+          <Button variant="outline" onClick={copy}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <p className="text-text-muted-light text-sm">No join code yet.</p>
+      )}
+      {session.requiresPayment && (
+        <p className="text-xs text-text-muted-light mt-3">
+          Students will pay {session.currency} {session.price} on join.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ParticipantsPanel({ sessionId, canManage }: { sessionId: string; canManage: boolean }) {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["session", sessionId, "participants"],
+    queryFn: async () => {
+      const resp = await apiGet<{ participants: any[]; total: number }>(
+        `/sessions/${sessionId}/participants`,
+      );
+      return (resp.data.participants || []).map((p) => ({
+        userId: p.studentId?._id || p.studentId,
+        name: p.studentId?.name || "Unknown",
+        email: p.studentId?.email || "",
+        paymentStatus: p.isPaid ? "paid" : "pending",
+      }));
+    },
+  });
+  const [email, setEmail] = useState("");
+  const [results, setResults] = useState<User[]>([]);
+  const search = async (q: string) => {
+    setEmail(q);
+    if (q.length < 2) { setResults([]); return; }
+    try {
+      const { data: users } = await apiGet<User[]>(`/users?q=${encodeURIComponent(q)}`);
+      setResults(users || []);
+    } catch { setResults([]); }
+  };
+  const add = async (userId: string) => {
+    try {
+      await apiPost(`/sessions/${sessionId}/participants`, { userId });
+      toast.success("Added");
+      setEmail(""); setResults([]);
+      qc.invalidateQueries({ queryKey: ["session", sessionId, "participants"] });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed");
+    }
+  };
+
+  return (
+    <section className="bg-white border rounded-2xl p-5">
+      <h2 className="font-display font-semibold mb-3 flex items-center gap-2">
+        <UsersIcon className="h-4 w-4" /> Participants
+      </h2>
+      <ul className="divide-y mb-4">
+        {(data || []).map((p) => (
+          <li key={p.userId} className="py-2 flex items-center justify-between text-sm">
+            <div>
+              <div className="font-medium">{p.name || p.userId}</div>
+              <div className="text-xs text-text-muted-light">{p.email}</div>
+            </div>
+            {p.paymentStatus && p.paymentStatus !== "not_required" && (
+              <CornerPillBadge tone={p.paymentStatus === "paid" ? "teal" : "amber"}>
+                {p.paymentStatus}
+              </CornerPillBadge>
+            )}
+          </li>
+        ))}
+        {!data?.length && (
+          <li className="py-3 text-sm text-text-muted-light">No participants yet.</li>
+        )}
+      </ul>
+      {canManage && (
+        <div className="relative">
+          <Input placeholder="Search users by name or email…"
+            value={email} onChange={(e) => search(e.target.value)} />
+          {!!results.length && (
+            <div className="absolute z-10 bg-white border rounded-lg w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
+              {results.map((u) => (
+                <button key={u._id} onClick={() => add(u._id)}
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-light">
+                  <div className="font-medium">{u.name}</div>
+                  <div className="text-xs text-text-muted-light">{u.email}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SessionInfoPanel({
+  session,
+  isStaff,
+  onRescheduleClick,
+}: {
+  session: Session;
+  isStaff: boolean;
+  onRescheduleClick: () => void;
+}) {
+  const now = new Date();
+  const scheduledTime = session.scheduledAt ? new Date(session.scheduledAt) : null;
+  const canReschedule =
+    isStaff &&
+    (session.status === "draft" ||
+      (session.status === "scheduled" &&
+        scheduledTime &&
+        scheduledTime.getTime() - now.getTime() > 30 * 60 * 1000));
+
+  return (
+    <section className="bg-white border rounded-2xl p-5 shadow-sm space-y-4 text-left">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display font-semibold text-text-on-light flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-accent-teal" /> Session Details
+        </h2>
+        {canReschedule && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRescheduleClick}
+            className="text-xs text-accent-teal border-accent-teal hover:bg-accent-teal/5"
+          >
+            Reschedule
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 text-sm text-left">
+        <div>
+          <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Scheduled At</span>
+          <span className="font-medium text-text-on-light">
+            {session.scheduledAt ? new Date(session.scheduledAt).toLocaleString() : "Not Scheduled"}
+          </span>
+        </div>
+        <div>
+          <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Duration</span>
+          <span className="font-medium text-text-on-light">{session.durationMins || 45} minutes</span>
+        </div>
+        <div className="col-span-2 border-t border-hairline-light pt-3">
+          <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Topic</span>
+          <span className="font-medium text-text-on-light">{session.topic || "No topic set"}</span>
+        </div>
+        {session.instructorId && (
+          <div className="col-span-2 border-t border-hairline-light pt-3">
+            <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Instructor</span>
+            <span className="font-medium text-text-on-light">
+              {session.instructorId.name} ({session.instructorId.email})
+            </span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AttachmentsPanel({
+  attachments,
+  error,
+  isStaff,
+  onAddClick,
+  onDeleteClick,
+}: {
+  attachments: Attachment[];
+  error: any;
+  isStaff: boolean;
+  onAddClick: () => void;
+  onDeleteClick: (id: string) => void;
+}) {
+  const isLocked = error instanceof ApiError && error.status === 403;
+
+  if (isLocked) {
+    return (
+      <section className="bg-white border rounded-2xl p-5 shadow-sm text-left">
+        <h2 className="font-display font-semibold mb-3 flex items-center gap-2 text-text-on-light">
+          <Paperclip className="h-4 w-4" /> Attachments
+        </h2>
+        <div className="bg-slate-50 border border-dashed rounded-xl p-6 text-center space-y-3">
+          <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+            <Lock className="h-5 w-5" />
+          </div>
+          <h4 className="text-sm font-semibold text-text-on-light">Attachments Locked</h4>
+          <p className="text-xs text-text-muted-light max-w-sm mx-auto">
+            You must be registered/subscribed to this Group Discussion session to access files and handouts.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="bg-white border rounded-2xl p-5 shadow-sm text-left">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display font-semibold flex items-center gap-2 text-text-on-light">
+          <Paperclip className="h-4 w-4 text-accent-teal" /> Attachments
+        </h2>
+        {isStaff && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onAddClick}
+            className="text-xs text-accent-teal border-accent-teal hover:bg-accent-teal/5 flex items-center gap-1"
+          >
+            <Plus className="h-3 w-3" /> Add Attachment
+          </Button>
+        )}
+      </div>
+
+      {attachments.length > 0 ? (
+        <ul className="space-y-3">
+          {attachments.map((att) => (
+            <li
+              key={att._id}
+              className="flex items-center justify-between p-3 rounded-xl border border-hairline-light hover:border-accent-teal/40 transition group bg-surface-light"
+            >
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center text-accent-teal shrink-0">
+                  {att.fileType?.toLowerCase() === "link" ? (
+                    <LinkIcon className="h-4 w-4" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <a
+                    href={att.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium hover:text-accent-teal truncate block"
+                  >
+                    {att.title}
+                  </a>
+                  {att.description && (
+                    <p className="text-xs text-text-muted-light line-clamp-1">
+                      {att.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 ml-3 shrink-0">
+                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-text-muted-light hover:text-accent-teal">
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </a>
+                {isStaff && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteClick(att._id)}
+                    className="h-8 w-8 p-0 text-text-muted-light hover:text-accent-red"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="text-xs text-text-muted-light py-6 text-center bg-slate-50 border border-dashed rounded-xl">
+          No attachments uploaded for this session yet.
+        </div>
+      )}
+    </section>
+  );
+}
