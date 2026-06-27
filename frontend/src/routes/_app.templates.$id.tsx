@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { apiGet, apiPatch, ApiError } from "@/lib/api";
+import { apiGet, apiPatch, apiDelete, ApiError } from "@/lib/api";
 import type { Template, TemplateField, FieldType } from "@/lib/types";
 import { PageHeader } from "@/components/brand/PageHeader";
 import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
@@ -50,6 +50,7 @@ function newField(): TemplateField {
 function TemplateBuilder() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: templateData } = useQuery({
     queryKey: ["template", id],
     queryFn: async () => (await apiGet<{ template: Template }>(`/templates/${id}`)).data,
@@ -93,6 +94,15 @@ function TemplateBuilder() {
       qc.invalidateQueries({ queryKey: ["template", id] });
     } catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
   };
+  const remove = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete this template? This action cannot be undone.")) return;
+    try {
+      await apiDelete(`/templates/${id}`);
+      toast.success("Template deleted successfully");
+      qc.invalidateQueries({ queryKey: ["templates"] });
+      navigate({ to: "/templates" });
+    } catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
+  };
 
   const updateField = (idx: number, patch: Partial<TemplateField>) => {
     setFields((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
@@ -121,6 +131,7 @@ function TemplateBuilder() {
         </CornerPillBadge>}
         actions={
           <div className="flex gap-2">
+            <Button variant="destructive" onClick={remove}>Delete</Button>
             <Button variant="outline" onClick={archive}>Archive</Button>
             <Button onClick={publish}
               className="bg-accent-teal hover:bg-accent-teal-bright">

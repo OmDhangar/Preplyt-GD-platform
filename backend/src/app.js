@@ -19,12 +19,27 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 // ── CORS ───────────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:8080',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://preplyt-gd-platform.vercel.app'
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 
 // ── Razorpay webhook needs the raw body — custom middleware to preserve it ────
 // This middleware captures raw body before express.json() parses it

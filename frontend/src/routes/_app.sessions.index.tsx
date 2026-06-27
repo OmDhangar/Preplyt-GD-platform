@@ -147,7 +147,7 @@ function SessionsList() {
                         </a>
                       </div>
                     )}
-                    {s.joinCode && (
+                    {s.joinCode && studentTab === "joined" && (
                       <div className="flex items-center gap-2">
                         <Key className="h-3.5 w-3.5 text-accent-teal" />
                         <span>Code: <code className="bg-surface-light px-1.5 py-0.5 rounded font-mono font-bold text-xs">{s.joinCode}</code></span>

@@ -75,13 +75,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Astram GD — Group Discussion Evaluation" },
+      { title: "Preplyt GD — Group Discussion Evaluation" },
       {
         name: "description",
         content:
           "Run, evaluate, and publish Group Discussion sessions in real time.",
       },
-      { property: "og:title", content: "Astram GD — Group Discussion Evaluation" },
+      { property: "og:title", content: "Preplyt GD — Group Discussion Evaluation" },
       {
         property: "og:description",
         content:

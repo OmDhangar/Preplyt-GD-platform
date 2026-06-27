@@ -14,5 +14,6 @@ router.patch('/:id', updateTemplateRules, validate, ctrl.updateTemplate);
 router.patch('/:id/publish', ctrl.publishTemplate);
 router.patch('/:id/archive', ctrl.archiveTemplate);
 router.post('/:id/duplicate', ctrl.duplicateTemplate);
+router.delete('/:id', ctrl.deleteTemplate);
 
 module.exports = router;

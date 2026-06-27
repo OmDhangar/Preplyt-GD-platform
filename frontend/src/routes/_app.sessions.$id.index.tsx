@@ -28,6 +28,7 @@ import {
   ExternalLink,
   Calendar,
   Clock,
+  FileText,
 } from "lucide-react";
 import {
   Select,
@@ -708,6 +709,7 @@ function GoogleMeetPanel({
 }
 
 function JoinCodePanel({ session }: { session: Session }) {
+  const { role } = useAuth();
   const copy = () => {
     if (!session.joinCode) return;
     navigator.clipboard.writeText(session.joinCode);
@@ -726,7 +728,15 @@ function JoinCodePanel({ session }: { session: Session }) {
           </Button>
         </div>
       ) : (
-        <p className="text-text-muted-light text-sm">No join code yet.</p>
+        <p className="text-text-muted-light text-sm">
+          {role === "student" ? (
+            <span className="flex items-center gap-1.5 text-amber-600 font-medium">
+              🔑 Join details are locked. Register to view details.
+            </span>
+          ) : (
+            "No join code yet."
+          )}
+        </p>
       )}
       {session.requiresPayment && (
         <p className="text-xs text-text-muted-light mt-3">

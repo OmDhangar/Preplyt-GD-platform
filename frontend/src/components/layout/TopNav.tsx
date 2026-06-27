@@ -41,7 +41,7 @@ export function TopNav() {
               GD
             </div>
             <span className="font-display text-lg tracking-tight">
-              Astram <span className="text-gradient-teal font-semibold">GD</span>
+              Preplyt <span className="text-gradient-teal font-semibold">GD</span>
             </span>
           </Link>
         </div>

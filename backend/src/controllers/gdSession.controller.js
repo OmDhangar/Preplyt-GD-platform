@@ -102,25 +102,20 @@ exports.getSessions = asyncHandler(async (req, res) => {
       const participantSessions = await SessionParticipant.find({ studentId: req.user._id }).select('sessionId');
       const sessionIds = participantSessions.map(p => p.sessionId);
       filter._id = { $in: sessionIds };
-      filter.$or = [
-        { status: SESSION_STATUS.ACTIVE },
-        {
-          status: { $nin: [SESSION_STATUS.COMPLETED, SESSION_STATUS.CANCELLED] },
-          scheduledAt: { $gt: new Date() }
-        }
-      ];
+      filter.status = { $in: [SESSION_STATUS.SCHEDULED, SESSION_STATUS.ACTIVE] };
     } else if (filterType === 'past') {
       const participantSessions = await SessionParticipant.find({ studentId: req.user._id }).select('sessionId');
       const sessionIds = participantSessions.map(p => p.sessionId);
       filter._id = { $in: sessionIds };
-      filter.$or = [
-        { status: { $in: [SESSION_STATUS.COMPLETED, SESSION_STATUS.CANCELLED] } },
-        { scheduledAt: { $lt: new Date() }, status: { $ne: SESSION_STATUS.ACTIVE } }
-      ];
+      filter.status = { $in: [SESSION_STATUS.COMPLETED, SESSION_STATUS.CANCELLED] };
     } else {
       // Show all upcoming public sessions (scheduled in the future or active)
+      // and exclude sessions the student has already joined to prevent duplicates
+      const participantSessions = await SessionParticipant.find({ studentId: req.user._id }).select('sessionId');
+      const joinedSessionIds = participantSessions.map(p => p.sessionId);
+      filter._id = { $nin: joinedSessionIds };
       filter.$or = [
-        { status: SESSION_STATUS.ACTIVE, scheduledAt: { $gt: new Date() } },
+        { status: SESSION_STATUS.ACTIVE },
         { status: SESSION_STATUS.SCHEDULED, scheduledAt: { $gt: new Date() } }
       ];
     }
@@ -142,7 +137,25 @@ exports.getSessions = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(Number(limit));
 
-  paginated(res, sessions, page, limit, total);
+  let registeredSessionIds = new Set();
+  if (req.user.role === ROLES.STUDENT) {
+    const participantDocs = await SessionParticipant.find({
+      studentId: req.user._id,
+      status: { $in: [PARTICIPANT_STATUS.REGISTERED, PARTICIPANT_STATUS.ATTENDED] }
+    }).select('sessionId');
+    registeredSessionIds = new Set(participantDocs.map(p => String(p.sessionId)));
+  }
+
+  const sanitizedSessions = sessions.map(session => {
+    const s = session.toObject();
+    if (req.user.role === ROLES.STUDENT && !registeredSessionIds.has(String(s._id))) {
+      delete s.joinCode;
+      delete s.googleMeetUrl;
+    }
+    return s;
+  });
+
+  paginated(res, sanitizedSessions, page, limit, total);
 });
 
 
@@ -153,7 +166,7 @@ exports.getPublicUpcomingSessions = asyncHandler(async (req, res) => {
 
   const filter = {
     $or: [
-      { status: SESSION_STATUS.ACTIVE, scheduledAt: { $gt: new Date() } },
+      { status: SESSION_STATUS.ACTIVE },
       { status: SESSION_STATUS.SCHEDULED, scheduledAt: { $gt: new Date() } }
     ]
   };
@@ -165,7 +178,13 @@ exports.getPublicUpcomingSessions = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(Number(limit));
 
-  paginated(res, sessions, page, limit, total);
+  const sanitizedSessions = sessions.map(session => {
+    const s = session.toObject();
+    delete s.googleMeetUrl;
+    return s;
+  });
+
+  paginated(res, sanitizedSessions, page, limit, total);
 });
 
 // ── GET /api/sessions/:sessionId ──────────────────────────────────────────────
@@ -187,7 +206,21 @@ exports.getSession = asyncHandler(async (req, res, next) => {
     assertInstructorAccess(session, req.user);
   }
 
-  success(res, { session });
+  const s = session.toObject();
+
+  if (req.user.role === ROLES.STUDENT) {
+    const isSubscribed = await SessionParticipant.exists({
+      sessionId: session._id,
+      studentId: req.user._id,
+      status: { $in: [PARTICIPANT_STATUS.REGISTERED, PARTICIPANT_STATUS.ATTENDED] },
+    });
+    if (!isSubscribed) {
+      delete s.joinCode;
+      delete s.googleMeetUrl;
+    }
+  }
+
+  success(res, { session: s });
 });
 
 // ── PATCH /api/sessions/:sessionId ────────────────────────────────────────────
@@ -404,7 +437,12 @@ exports.getSessionByJoinCode = asyncHandler(async (req, res, next) => {
     .populate('instructorId', 'name')
     .populate('templateId', 'name');
   if (!session) return next(new AppError('Invalid join code.', 404));
-  success(res, { session });
+
+  const s = session.toObject();
+  delete s.googleMeetUrl;
+  delete s.joinCode;
+
+  success(res, { session: s });
 });
 
 // ── POST /api/sessions/:sessionId/join — student self-registration ───────────────

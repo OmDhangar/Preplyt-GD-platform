@@ -105,6 +105,7 @@ const AUDIT_ACTIONS = Object.freeze({
   TEMPLATE_UPDATE:        'template.update',
   TEMPLATE_PUBLISH:       'template.publish',
   TEMPLATE_ARCHIVE:       'template.archive',
+  TEMPLATE_DELETE:        'template.delete',
   // Payments
   PAYMENT_ORDER:          'payment.order_created',
   PAYMENT_VERIFIED:       'payment.verified',

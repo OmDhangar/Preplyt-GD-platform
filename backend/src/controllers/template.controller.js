@@ -170,3 +170,43 @@ exports.duplicateTemplate = asyncHandler(async (req, res, next) => {
 
   created(res, { template: copy }, 'Template duplicated');
 });
+
+// ── DELETE /api/templates/:id ────────────────────────────────────────────────
+exports.deleteTemplate = asyncHandler(async (req, res, next) => {
+  const template = await EvaluationTemplate.findById(req.params.id);
+  if (!template) return next(new AppError('Template not found.', 404));
+
+  // Only creator or admin can delete
+  if (String(template.createdBy) !== String(req.user._id) && req.user.role !== 'admin') {
+    return next(new AppError('You do not have permission to delete this template.', 403));
+  }
+
+  // Check if default template
+  if (template.isDefault && req.user.role !== 'admin') {
+    return next(new AppError('Default templates can only be deleted by an admin.', 403));
+  }
+
+  // Check if used by any GD session
+  const GdSession = require('../models/GdSession');
+  const sessionCount = await GdSession.countDocuments({ templateId: template._id });
+  if (sessionCount > 0) {
+    return next(new AppError('Cannot delete template as it is currently in use by one or more GD sessions. You can archive it instead.', 400));
+  }
+
+  // Check if used by any evaluation record
+  const EvaluationRecord = require('../models/EvaluationRecord');
+  const recordCount = await EvaluationRecord.countDocuments({ templateId: template._id });
+  if (recordCount > 0) {
+    return next(new AppError('Cannot delete template as it is referenced by existing evaluation records. You can archive it instead.', 400));
+  }
+
+  await EvaluationTemplate.findByIdAndDelete(template._id);
+
+  auditService.fromReq(req, {
+    action: AUDIT_ACTIONS.TEMPLATE_DELETE,
+    resource: 'EvaluationTemplate',
+    resourceId: template._id,
+  });
+
+  success(res, null, 'Template deleted successfully');
+});
