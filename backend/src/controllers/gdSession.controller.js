@@ -149,7 +149,6 @@ exports.getSessions = asyncHandler(async (req, res) => {
   const sanitizedSessions = sessions.map(session => {
     const s = session.toObject();
     if (req.user.role === ROLES.STUDENT && !registeredSessionIds.has(String(s._id))) {
-      delete s.joinCode;
       delete s.googleMeetUrl;
     }
     return s;
@@ -440,7 +439,6 @@ exports.getSessionByJoinCode = asyncHandler(async (req, res, next) => {
 
   const s = session.toObject();
   delete s.googleMeetUrl;
-  delete s.joinCode;
 
   success(res, { session: s });
 });
