@@ -101,7 +101,11 @@ function NewSession() {
 
   return (
     <div className="max-w-2xl">
-      <PageHeader title="New session" subtitle="set up a group discussion" />
+      <PageHeader
+        backUrl="/sessions"
+        title="New session"
+        subtitle="set up a group discussion"
+      />
       <form onSubmit={submit} className="bg-white border rounded-2xl p-6 space-y-4">
         {role === "admin" && (
           <div>

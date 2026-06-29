@@ -102,22 +102,22 @@ exports.getSessions = asyncHandler(async (req, res) => {
       const participantSessions = await SessionParticipant.find({ studentId: req.user._id }).select('sessionId');
       const sessionIds = participantSessions.map(p => p.sessionId);
       filter._id = { $in: sessionIds };
-      filter.status = { $in: [SESSION_STATUS.SCHEDULED, SESSION_STATUS.ACTIVE] };
     } else if (filterType === 'past') {
       const participantSessions = await SessionParticipant.find({ studentId: req.user._id }).select('sessionId');
       const sessionIds = participantSessions.map(p => p.sessionId);
       filter._id = { $in: sessionIds };
-      filter.status = { $in: [SESSION_STATUS.COMPLETED, SESSION_STATUS.CANCELLED] };
+      filter.$or = [
+        { status: SESSION_STATUS.COMPLETED },
+        { scheduledAt: { $lt: new Date() } }
+      ];
     } else {
-      // Show all upcoming public sessions (scheduled in the future or active)
+      // Show all upcoming public sessions (scheduled in the future)
       // and exclude sessions the student has already joined to prevent duplicates
       const participantSessions = await SessionParticipant.find({ studentId: req.user._id }).select('sessionId');
       const joinedSessionIds = participantSessions.map(p => p.sessionId);
       filter._id = { $nin: joinedSessionIds };
-      filter.$or = [
-        { status: SESSION_STATUS.ACTIVE },
-        { status: SESSION_STATUS.SCHEDULED, scheduledAt: { $gt: new Date() } }
-      ];
+      filter.status = SESSION_STATUS.SCHEDULED;
+      filter.scheduledAt = { $gt: new Date() };
     }
   } else if (req.user.role === ROLES.ADMIN) {
     // Admin sees all — optionally filter by instructor
@@ -164,10 +164,8 @@ exports.getPublicUpcomingSessions = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const filter = {
-    $or: [
-      { status: SESSION_STATUS.ACTIVE },
-      { status: SESSION_STATUS.SCHEDULED, scheduledAt: { $gt: new Date() } }
-    ]
+    status: SESSION_STATUS.SCHEDULED,
+    scheduledAt: { $gt: new Date() }
   };
   const total = await GdSession.countDocuments(filter);
   const sessions = await GdSession

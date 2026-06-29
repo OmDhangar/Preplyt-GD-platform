@@ -65,8 +65,8 @@ exports.batchUpdateEvaluations = asyncHandler(async (req, res, next) => {
   if (!session) return next(new AppError('Session not found.', 404));
   assertInstructorAccess(session, req.user);
 
-  if (session.status !== SESSION_STATUS.ACTIVE) {
-    return next(new AppError('Evaluations can only be edited during an active session.', 400));
+  if (session.status !== SESSION_STATUS.ACTIVE && session.status !== SESSION_STATUS.COMPLETED) {
+    return next(new AppError('Evaluations can only be edited during an active or completed session.', 400));
   }
 
   const results = { updated: 0, created: 0, errors: [] };
@@ -92,6 +92,9 @@ exports.batchUpdateEvaluations = asyncHandler(async (req, res, next) => {
             status:          EVALUATION_STATUS.DRAFT,
           });
           results.created++;
+        } else if (record.status === EVALUATION_STATUS.PUBLISHED) {
+          results.errors.push({ studentId, error: 'Cannot modify a published evaluation.' });
+          return;
         }
 
         // Apply LWW for each field
@@ -174,23 +177,64 @@ exports.publishEvaluations = asyncHandler(async (req, res, next) => {
   if (!session) return next(new AppError('Session not found.', 404));
   assertInstructorAccess(session, req.user);
 
+  // 1. Get all participants for this session
+  const participants = await SessionParticipant.find({ sessionId });
+  const participantStudentIds = participants.map((p) => String(p.studentId));
+
+  // 2. Ensure each participant has an EvaluationRecord (even if it's empty / draft)
+  const template = await EvaluationTemplate.findById(session.templateId);
+  if (!template) return next(new AppError('Evaluation template not found.', 404));
+
+  for (const studentId of participantStudentIds) {
+    let record = await EvaluationRecord.findOne({
+      sessionId,
+      studentId,
+      instructorId: req.user._id,
+    });
+    if (!record) {
+      record = new EvaluationRecord({
+        sessionId,
+        studentId,
+        instructorId:    req.user._id,
+        templateId:      session.templateId,
+        templateVersion: session.templateVersion,
+        status:          EVALUATION_STATUS.DRAFT,
+      });
+      await record.save();
+    }
+  }
+
+  // 3. Find records to publish
   const filter = {
     sessionId,
     instructorId: req.user._id,
-    status:       EVALUATION_STATUS.SUBMITTED,
+    status:       { $in: [EVALUATION_STATUS.DRAFT, EVALUATION_STATUS.SUBMITTED] },
   };
   if (studentIds?.length) filter.studentId = { $in: studentIds };
 
   const records = await EvaluationRecord.find(filter);
   if (!records.length) {
-    return next(new AppError('No submitted evaluations found to publish.', 404));
+    return next(new AppError('No evaluations found to publish.', 404));
   }
 
   const now = new Date();
-  await EvaluationRecord.updateMany(
-    { _id: { $in: records.map((r) => r._id) } },
-    { $set: { status: EVALUATION_STATUS.PUBLISHED, publishedAt: now } }
-  );
+  for (const record of records) {
+    if (record.status === EVALUATION_STATUS.DRAFT) {
+      record.computeScore(template.fields);
+      record.submittedAt = now;
+    }
+    record.status = EVALUATION_STATUS.PUBLISHED;
+    record.publishedAt = now;
+    await record.save();
+  }
+
+  // Update session evaluated count
+  const publishedCount = await EvaluationRecord.countDocuments({
+    sessionId,
+    instructorId: req.user._id,
+    status:       EVALUATION_STATUS.PUBLISHED,
+  });
+  await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: publishedCount });
 
   // Notify students and send emails (non-blocking)
   const studentIdsPublished = records.map((r) => r.studentId);
@@ -223,6 +267,14 @@ exports.publishEvaluations = asyncHandler(async (req, res, next) => {
 // Student-facing: returns only published evaluations for that student
 exports.getPublishedResults = asyncHandler(async (req, res, next) => {
   const { sessionId } = req.params;
+
+  const session = await GdSession.findById(sessionId);
+  if (!session) return next(new AppError('Session not found.', 404));
+
+  // If instructor, assert they have access to this session
+  if (req.user.role === ROLES.INSTRUCTOR) {
+    assertInstructorAccess(session, req.user);
+  }
 
   const filter = { sessionId, status: EVALUATION_STATUS.PUBLISHED };
 

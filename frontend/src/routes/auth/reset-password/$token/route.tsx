@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { apiPatch, ApiError } from "@/lib/api";
-import { AuthShell } from "./auth.login";
+import { AuthShell } from "@/routes/auth/login/route";
 
 export const Route = createFileRoute("/auth/reset-password/$token")({
   ssr: false,

@@ -193,7 +193,8 @@ All endpoints are prefixed with `/api`. Protected routes require:
 | POST   | /                             | instructor, admin  | Create session               |
 | GET    | /                             | instructor, admin  | List sessions (paginated)    |
 | GET    | /join/:joinCode               | all (pre-auth)     | Lookup by join code          |
-| GET    | /:sessionId                   | all                | Get session detail           |
+| GET    | /:sessionId                   | all                | Get session detail (hides keys if unregistered) |
+| GET    | /public/upcoming              | all                | List public upcoming & completed sessions |
 | PATCH  | /:sessionId                   | instructor, admin  | Update draft/scheduled session|
 | DELETE | /:sessionId                   | instructor, admin  | Delete non-active session    |
 | POST   | /:sessionId/start             | instructor, admin  | Activate session, pre-create drafts |
@@ -212,6 +213,7 @@ All endpoints are prefixed with `/api`. Protected routes require:
 | PATCH  | /:id/publish      | instructor, admin  | Set status → active       |
 | PATCH  | /:id/archive      | instructor, admin  | Archive template          |
 | POST   | /:id/duplicate    | instructor, admin  | Copy as new draft         |
+| DELETE | /:id              | instructor, admin  | Delete template (fails if template is in use) |
 
 **Template field types:** `number`, `select`, `multi_select`, `text`, `boolean`, `weighted_score`
 
@@ -219,11 +221,11 @@ All endpoints are prefixed with `/api`. Protected routes require:
 
 | Method | Path                                                  | Roles              | Description                       |
 |--------|-------------------------------------------------------|--------------------|-----------------------------------|
-| PATCH  | /batch                                                | instructor, admin  | **Batch upsert** (sole DB write path for live eval) |
+| PATCH  | /batch                                                | instructor, admin  | **Batch upsert** (allowed in active & completed sessions; rejects edits on published evals) |
 | GET    | /sessions/:sessionId/evaluations                      | instructor, admin  | All records × instructor (preload)|
 | GET    | /sessions/:sessionId/evaluations/:studentId           | instructor, admin  | Single record (auto-creates draft)|
 | PATCH  | /sessions/:sessionId/evaluations/:studentId/submit    | instructor, admin  | Submit + compute score            |
-| POST   | /sessions/:sessionId/evaluations/publish              | instructor, admin  | Publish (notify students)         |
+| POST   | /sessions/:sessionId/evaluations/publish              | instructor, admin  | Auto-creates missing drafts, computes draft scores on-the-fly, updates session's evaluatedCount, publishes & emails results |
 | GET    | /sessions/:sessionId/results                          | all                | Published results (filtered by role) |
 
 **Batch upsert body:**

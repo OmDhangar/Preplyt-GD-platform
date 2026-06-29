@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { apiGet, apiPatch, ApiError } from "@/lib/api";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ClipboardList } from "lucide-react";
 
 const STANDARD_FIELDS: TemplateField[] = [
   {
@@ -81,6 +82,7 @@ export const Route = createFileRoute("/_app/sessions/$id/evaluate")({
 function EvaluatePage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", id],
@@ -195,7 +197,7 @@ function EvaluatePage() {
   const live = useLiveEvaluation(id, fields);
 
   // Default active student
-  if (!activeStudentId && participants.length) {
+  if (!activeStudentId && activeStudentId !== "summary" && participants.length) {
     setActiveStudentId(participants[0].userId);
   }
 
@@ -203,8 +205,8 @@ function EvaluatePage() {
     return <div className="text-text-muted-light">Loading evaluation…</div>;
   }
 
-  const activeValues = activeStudentId ? live.values[activeStudentId] || {} : {};
-  const score = activeStudentId
+  const activeValues = activeStudentId && activeStudentId !== "summary" ? live.values[activeStudentId] || {} : {};
+  const score = activeStudentId && activeStudentId !== "summary"
     ? live.computedScore(activeStudentId)
     : { totalScore: 0, maxScore: 0, percentScore: 0 };
 
@@ -221,6 +223,7 @@ function EvaluatePage() {
   return (
     <div>
       <PageHeader
+        backUrl={`/sessions/${id}`}
         title={session.title}
         subtitle="live evaluation"
         pill={<CornerPillBadge tone="teal">{session.status}</CornerPillBadge>}
@@ -251,7 +254,7 @@ function EvaluatePage() {
               <label className="text-xs uppercase tracking-wider text-text-muted-light font-bold">
                 Student Selection ({participants.length})
               </label>
-              {activeStudentId && (
+              {activeStudentId && activeStudentId !== "summary" && (
                 <span className="text-xs font-semibold text-accent-teal">
                   Current Score: {live.computedScore(activeStudentId).percentScore}%
                 </span>
@@ -263,6 +266,7 @@ function EvaluatePage() {
                 onChange={(e) => setActiveStudentId(e.target.value)}
                 className="flex-1 border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-accent-teal cursor-pointer"
               >
+                <option value="summary">📊 Results Summary</option>
                 {participants.map((p) => {
                   const s = live.computedScore(p.userId);
                   return (
@@ -280,6 +284,8 @@ function EvaluatePage() {
                   const idx = participants.findIndex(p => p.userId === activeStudentId);
                   if (idx > 0) {
                     setActiveStudentId(participants[idx - 1].userId);
+                  } else if (idx === 0) {
+                    setActiveStudentId("summary");
                   } else {
                     setActiveStudentId(participants[participants.length - 1].userId);
                   }
@@ -294,10 +300,12 @@ function EvaluatePage() {
                 disabled={participants.length <= 1}
                 onClick={() => {
                   const idx = participants.findIndex(p => p.userId === activeStudentId);
-                  if (idx !== -1 && idx < participants.length - 1) {
+                  if (activeStudentId === "summary") {
+                    setActiveStudentId(participants[0].userId);
+                  } else if (idx !== -1 && idx < participants.length - 1) {
                     setActiveStudentId(participants[idx + 1].userId);
                   } else {
-                    setActiveStudentId(participants[0].userId);
+                    setActiveStudentId("summary");
                   }
                 }}
                 className="px-3 cursor-pointer"
@@ -309,41 +317,185 @@ function EvaluatePage() {
         )}
 
         <aside className="hidden lg:block bg-white border rounded-2xl p-3 h-fit sticky top-4">
-          <div className="text-xs uppercase tracking-wider text-text-muted-light px-2 py-1">
-            Students
-          </div>
-          <ul className="space-y-1">
-            {participants.map((p) => {
-              const s = live.computedScore(p.userId);
-              return (
-                <li key={p.userId}>
-                  <button
-                    onClick={() => setActiveStudentId(p.userId)}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg flex items-center justify-between gap-2 text-sm cursor-pointer",
-                      activeStudentId === p.userId
-                        ? "bg-surface-light text-accent-teal font-semibold"
-                        : "hover:bg-surface-light",
-                    )}
-                  >
-                    <span className="truncate">{p.name || p.userId}</span>
-                    <span className="text-xs font-semibold text-accent-teal">
-                      {s.percentScore}%
-                    </span>
-                  </button>
+          <div className="space-y-2">
+            <button
+              onClick={() => setActiveStudentId("summary")}
+              className={cn(
+                "w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition cursor-pointer",
+                activeStudentId === "summary"
+                  ? "bg-accent-teal/10 text-accent-teal"
+                  : "hover:bg-surface-light text-text-on-light"
+              )}
+            >
+              <ClipboardList className="h-4 w-4 text-accent-teal" />
+              <span>Results Summary</span>
+            </button>
+            <div className="h-[1px] bg-gray-100 my-2" />
+            <div className="text-xs uppercase tracking-wider text-text-muted-light px-2 py-1">
+              Students ({participants.length})
+            </div>
+            <ul className="space-y-1">
+              {participants.map((p) => {
+                const s = live.computedScore(p.userId);
+                const missingCount = fields.filter(
+                  (f) => f.required && (live.values[p.userId]?.[f.fieldId] === undefined || live.values[p.userId]?.[f.fieldId] === null || live.values[p.userId]?.[f.fieldId] === "")
+                ).length;
+                return (
+                  <li key={p.userId}>
+                    <button
+                      onClick={() => setActiveStudentId(p.userId)}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-lg flex items-center justify-between gap-2 text-sm cursor-pointer",
+                        activeStudentId === p.userId
+                          ? "bg-surface-light text-accent-teal font-semibold"
+                          : "hover:bg-surface-light",
+                      )}
+                    >
+                      <span className="truncate flex-1 text-left">{p.name || p.userId}</span>
+                      {missingCount > 0 && (
+                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold mr-1 shrink-0">
+                          {missingCount} left
+                        </span>
+                      )}
+                      <span className="text-xs font-semibold text-accent-teal shrink-0">
+                        {s.percentScore}%
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+              {!participants.length && (
+                <li className="px-2 py-3 text-xs text-text-muted-light">
+                  No students assigned.
                 </li>
-              );
-            })}
-            {!participants.length && (
-              <li className="px-2 py-3 text-xs text-text-muted-light">
-                No students assigned.
-              </li>
-            )}
-          </ul>
+              )}
+            </ul>
+          </div>
         </aside>
 
         <section className="bg-white border rounded-2xl p-6">
-          {activeStudentId ? (
+          {activeStudentId === "summary" ? (
+            <div className="space-y-6 text-left">
+              <div>
+                <h2 className="font-display text-xl font-bold text-text-on-light">
+                  GD Evaluation Summary
+                </h2>
+                <p className="text-sm text-text-muted-light">
+                  Review all candidates' scores and complete required criteria before publishing the results.
+                </p>
+              </div>
+
+              <div className="overflow-x-auto border border-hairline-light rounded-xl">
+                <table className="w-full text-sm">
+                  <thead className="bg-surface-light border-b text-left text-xs uppercase tracking-wider text-text-muted-light">
+                    <tr>
+                      <th className="p-3">Student</th>
+                      <th className="p-3">Required Fields</th>
+                      <th className="p-3">Comments</th>
+                      <th className="p-3">Score</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {participants.map((p) => {
+                      const s = live.computedScore(p.userId);
+                      const missingFields = fields.filter(
+                        (f) => f.required && (live.values[p.userId]?.[f.fieldId] === undefined || live.values[p.userId]?.[f.fieldId] === null || live.values[p.userId]?.[f.fieldId] === "")
+                      );
+                      const hasComment = !!live.values[p.userId]?.overallComment;
+
+                      return (
+                        <tr key={p.userId} className="hover:bg-slate-50/50">
+                          <td className="p-3">
+                            <button
+                              onClick={() => setActiveStudentId(p.userId)}
+                              className="font-semibold text-text-on-light hover:text-accent-teal hover:underline text-left block cursor-pointer bg-transparent border-0 p-0"
+                            >
+                              {p.name || p.userId}
+                            </button>
+                            <span className="text-[10px] text-text-muted-light">{p.email}</span>
+                          </td>
+                          <td className="p-3">
+                            {missingFields.length === 0 ? (
+                              <span className="inline-flex items-center text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5" />
+                                All filled
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-full">
+                                <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5" />
+                                Missing {missingFields.length} criteria
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {hasComment ? (
+                              <span className="inline-flex items-center text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">
+                                Provided
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full">
+                                No feedback
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <span className="font-semibold text-text-on-light">{s.percentScore}%</span>
+                            <span className="text-xs text-text-muted-light ml-1.5">({s.totalScore}/{s.maxScore})</span>
+                          </td>
+                          <td className="p-3 text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setActiveStudentId(p.userId)}
+                              className="text-xs py-1 px-2.5 h-8 border-accent-teal text-accent-teal hover:bg-surface-light cursor-pointer"
+                            >
+                              Evaluate
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {!participants.length && (
+                      <tr>
+                        <td colSpan={5} className="p-6 text-center text-text-muted-light">
+                          No candidates assigned.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Action Panel */}
+              <div className="bg-surface-light border border-hairline-light rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm text-text-on-light">Ready to Publish?</h4>
+                  <p className="text-xs text-text-muted-light max-w-md">
+                    Publishing will finalize all drafts, calculate scores, and notify all students via email and notifications. This action is irreversible.
+                  </p>
+                </div>
+                <Button
+                  onClick={async () => {
+                    const confirmPublish = confirm("Are you sure you want to publish all results? This will notify all evaluated students.");
+                    if (!confirmPublish) return;
+
+                    try {
+                      await live.publishAll();
+                      toast.success("All evaluation results published successfully!");
+                      qc.invalidateQueries({ queryKey: ["session", id] });
+                      navigate({ to: "/sessions/$id", params: { id } });
+                    } catch (e) {
+                      toast.error("Failed to publish results");
+                    }
+                  }}
+                  className="w-full sm:w-auto bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold px-6 cursor-pointer"
+                >
+                  Publish All Results
+                </Button>
+              </div>
+            </div>
+          ) : activeStudentId ? (
             <>
               <div className="flex items-baseline justify-between mb-5">
                 <div>

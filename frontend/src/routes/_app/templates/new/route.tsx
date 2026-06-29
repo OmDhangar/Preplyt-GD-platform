@@ -35,7 +35,11 @@ function NewTemplate() {
 
   return (
     <div className="max-w-xl">
-      <PageHeader title="New template" subtitle="start with a name" />
+      <PageHeader
+        backUrl="/templates"
+        title="New template"
+        subtitle="start with a name"
+      />
       <form onSubmit={submit} className="bg-white border rounded-2xl p-6 space-y-4">
         <div>
           <Label htmlFor="name">Name</Label>

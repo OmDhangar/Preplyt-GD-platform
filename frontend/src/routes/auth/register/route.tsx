@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
-import { AuthShell } from "./auth.login";
+import { AuthShell } from "@/routes/auth/login/route";
 import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/auth/register")({

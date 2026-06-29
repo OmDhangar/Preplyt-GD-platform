@@ -204,6 +204,7 @@ function SessionDetail() {
   return (
     <div>
       <PageHeader
+        backUrl="/sessions"
         title={session.title}
         subtitle={session.description}
         pill={<CornerPillBadge>{session.status}</CornerPillBadge>}

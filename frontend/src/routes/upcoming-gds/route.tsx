@@ -27,8 +27,8 @@ function PublicUpcomingGdsPage() {
   const { data: sessions, isLoading } = useQuery({
     queryKey: ["public-upcoming-sessions"],
     queryFn: async () => {
-      const resp = await apiGet<{ sessions: Session[] }>("/sessions/public/upcoming");
-      return resp.data.sessions || [];
+      const resp = await apiGet<Session[]>("/sessions/public/upcoming");
+      return resp.data || [];
     },
   });
 
@@ -59,6 +59,7 @@ function PublicUpcomingGdsPage() {
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
             <Link to="/" className="hover:text-white transition">Home</Link>
             <Link to="/upcoming-gds" className="text-accent-teal font-semibold transition">Upcoming GDs</Link>
+            <Link to="/about-us" className="hover:text-white transition">About Us</Link>
             <a href="/#how-it-works" className="hover:text-white transition">How it works</a>
             <a href="/#mentors" className="hover:text-white transition">Meet Mentors</a>
           </nav>
@@ -117,8 +118,14 @@ function PublicUpcomingGdsPage() {
               >
                 <div className="space-y-4 text-left">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="px-2 py-0.5 rounded bg-accent-teal/10 text-accent-teal text-[10px] font-bold uppercase tracking-wider">
-                      {s.status === "active" ? "LIVE NOW" : "Upcoming"}
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      s.status === "active"
+                        ? "bg-accent-teal/10 text-accent-teal"
+                        : s.status === "completed"
+                        ? "bg-white/10 text-text-muted-dark"
+                        : "bg-amber-500/10 text-amber-500"
+                    }`}>
+                      {s.status === "active" ? "LIVE NOW" : s.status === "completed" ? "Completed" : "Upcoming"}
                     </span>
                     <CornerPillBadge tone={s.requiresPayment ? "amber" : "teal"}>
                       {s.requiresPayment && s.sessionFee ? `${s.sessionFee.currency} ${s.sessionFee.amount}` : "Free"}
@@ -173,12 +180,21 @@ function PublicUpcomingGdsPage() {
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-white/5">
-                  <Button
-                    onClick={() => handleRegister(s.joinCode || "")}
-                    className="w-full bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold py-5 cursor-pointer"
-                  >
-                    Register to Join
-                  </Button>
+                  {s.status === "completed" ? (
+                    <Button
+                      disabled
+                      className="w-full bg-white/5 text-white/30 border border-white/5 cursor-not-allowed font-semibold py-5"
+                    >
+                      Completed
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleRegister(s.joinCode || "")}
+                      className="w-full bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold py-5 cursor-pointer"
+                    >
+                      Register to Join
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { apiGet, ApiError } from "@/lib/api";
-import { AuthShell } from "./auth.login";
+import { AuthShell } from "@/routes/auth/login/route";
 
 export const Route = createFileRoute("/auth/verify/$token")({
   ssr: false,

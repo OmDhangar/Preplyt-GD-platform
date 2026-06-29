@@ -1,0 +1,268 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "@/lib/auth-store";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowRight,
+  Target,
+  Compass,
+  Users,
+  Calendar,
+  Zap,
+  ChevronLeft,
+} from "lucide-react";
+
+export const Route = createFileRoute("/about-us")({
+  ssr: false,
+  component: AboutUsPage,
+});
+
+function AboutUsPage() {
+  const { accessToken } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleJoinGD = () => {
+    navigate({ to: "/upcoming-gds" });
+  };
+
+  const team = [
+    {
+      name: "Raj Girase",
+      role: "CEO",
+      avatar: "https://preplyt.com/wp-content/uploads/2026/03/WhatsApp-Image-2026-02-04-at-15.16.01.jpg-1.jpeg",
+      bullets: ["Strategy & leadership", "Finance", "Execution"],
+    },
+    {
+      name: "Kulvansh Rajput",
+      role: "CTO",
+      avatar: "https://preplyt.com/wp-content/uploads/2026/03/KULVANSH-RAJPUT_b215-scaled.jpg",
+      bullets: ["Platform development", "Technology integration", "Maintenance & scaling"],
+    },
+    {
+      name: "Sneha",
+      role: "CMO",
+      avatar: "https://preplyt.com/wp-content/uploads/2026/03/Gemini_Generated_Image_7pbygi7pbygi7pby-1.png",
+      bullets: ["Marketing strategy", "Brand growth", "Onboarding"],
+    },
+    {
+      name: "Manas",
+      role: "Operations",
+      avatar: "https://preplyt.com/wp-content/uploads/2026/03/WhatsApp-Image-2026-03-28-at-1.53.04-PM.jpeg",
+      bullets: ["Daily operations", "Session management", "Coordination"],
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-bg-dark text-text-on-dark selection:bg-accent-teal/30 select-none">
+      {/* ─── Header ─── */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-bg-dark/80 border-b border-white/5 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="h-10 w-10 rounded-xl bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal">
+              PL
+            </div>
+            <span className="font-display text-xl font-bold tracking-tight text-white">
+              Prep<span className="text-gradient-teal font-extrabold">Lyt</span>
+            </span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
+            <Link to="/upcoming-gds" className="hover:text-accent-teal transition">Upcoming GDs</Link>
+            <Link to="/about-us" className="text-accent-teal font-semibold transition">About Us</Link>
+            <a href="/#how-it-works" className="hover:text-accent-teal transition">How it works</a>
+            <a href="/#mentors" className="hover:text-accent-teal transition">Meet Mentors</a>
+            <a href="/#faq" className="hover:text-accent-teal transition">FAQ</a>
+          </nav>
+          <div>
+            {accessToken ? (
+              <Link to="/dashboard">
+                <Button className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal px-5 py-5 text-sm font-medium">
+                  Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/auth/login">
+                <Button variant="outline" className="border-white/10 hover:border-white/20 text-white bg-white/5 hover:bg-white/10 px-5 py-5 text-sm font-medium">
+                  Login / Register
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ─── Hero Section ─── */}
+      <section className="relative min-h-[45vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "linear-gradient(rgba(5, 8, 17, 0.75), rgba(5, 8, 17, 0.95)), url('https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80')" }} />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.15),transparent_65%)] pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+          <div className="mb-4">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-text-muted-dark hover:text-white transition">
+              <ChevronLeft className="h-3.5 w-3.5" /> Back to Home
+            </Link>
+          </div>
+          <h1 className="font-display text-4xl sm:text-6xl font-bold text-white tracking-tight leading-tight">
+            Our <span className="text-gradient-teal font-extrabold font-display">Story</span>
+          </h1>
+          <p className="text-base sm:text-xl text-text-muted-dark max-w-xl mx-auto leading-relaxed font-sans">
+            From struggling in GDs to building confidence in students.
+          </p>
+        </div>
+      </section>
+
+      {/* ─── Background Section ─── */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-6 relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-accent-teal to-accent-teal-bright rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000" />
+              <img
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80"
+                alt="Student Collaboration"
+                className="relative rounded-2xl border border-white/10 shadow-elegant w-full object-cover aspect-[4/3] transform transition duration-500 hover:scale-[1.01]"
+              />
+            </div>
+            <div className="lg:col-span-6 text-left space-y-6">
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                Background
+              </h2>
+              <div className="h-1 w-20 bg-gradient-teal rounded" />
+              <div className="space-y-4 text-base sm:text-lg text-text-muted-dark leading-relaxed font-sans">
+                <p>
+                  Many students fail placements not because of lack of knowledge, but due to poor communication skills, stage fear, and lack of structured Group Discussion exposure.
+                </p>
+                <p>
+                  PrepLyt was built to bridge this critical gap. By offering live, mentored group discussions, customizable scoring rubrics, and detailed individual scorecards, we empower students to transform their communication skills from a weakness to a superpower.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Mission & Vision ─── */}
+      <section className="py-20 bg-surface-dark-2/40 border-y border-white/5 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(20,184,166,0.05),transparent_40%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-surface-dark-2/60 border border-white/5 rounded-2xl p-8 hover:border-accent-teal/30 transition shadow-elegant text-left space-y-4">
+            <div className="h-12 w-12 rounded-xl bg-accent-teal/10 flex items-center justify-center text-accent-teal">
+              <Target className="h-6 w-6" />
+            </div>
+            <h3 className="font-display text-2xl font-bold text-white">Our Mission</h3>
+            <p className="text-sm sm:text-base text-text-muted-dark leading-relaxed font-sans">
+              To make students confident, articulate, and placement-ready through practical learning, consistent feedback, and real-world evaluation rubrics.
+            </p>
+          </div>
+          <div className="bg-surface-dark-2/60 border border-white/5 rounded-2xl p-8 hover:border-accent-teal/30 transition shadow-elegant text-left space-y-4">
+            <div className="h-12 w-12 rounded-xl bg-accent-teal/10 flex items-center justify-center text-accent-teal">
+              <Compass className="h-6 w-6" />
+            </div>
+            <h3 className="font-display text-2xl font-bold text-white">Our Vision</h3>
+            <p className="text-sm sm:text-base text-text-muted-dark leading-relaxed font-sans">
+              To become India's leading Group Discussion learning and preparation platform, setting the benchmark for communication evaluation in higher education and corporations.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Growing Impact ─── */}
+      <section className="py-20 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="space-y-3">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">Our Growing Impact</h2>
+            <p className="text-text-muted-dark font-sans max-w-xl mx-auto">Driving consistent improvement across institutes and communities.</p>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { val: "50+", label: "Students Enabled", icon: Users },
+              { val: "10+", label: "Sessions Hosted", icon: Calendar },
+              { val: "100%", label: "Practical Learning", icon: Zap },
+              { val: "Growing", label: "Community", icon: Users },
+            ].map((stat, i) => {
+              const IconComp = stat.icon;
+              return (
+                <div key={i} className="bg-surface-dark/40 border border-white/5 rounded-2xl p-6 hover:border-accent-teal/30 transition shadow-elegant flex flex-col items-center">
+                  <div className="text-gradient-teal text-4xl sm:text-5xl font-black font-sans tracking-tight mb-2">
+                    {stat.val}
+                  </div>
+                  <div className="text-xs sm:text-sm text-text-muted-dark font-semibold uppercase tracking-wider font-sans">
+                    {stat.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Core Team ─── */}
+      <section className="py-20 bg-surface-dark-2/40 border-t border-white/5 text-center relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="space-y-4 max-w-2xl mx-auto">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">Our Core Team</h2>
+            <p className="text-sm sm:text-base text-text-muted-dark leading-relaxed font-sans">
+              A passionate team working together to build a platform that transforms communication skills and prepares students for real-world placement success.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {team.map((member, i) => (
+              <div key={i} className="bg-bg-dark border border-white/5 rounded-2xl p-6 hover:border-accent-teal/40 transition-all duration-300 hover:-translate-y-1.5 shadow-elegant flex flex-col items-center">
+                <div className="relative mb-5 group">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-accent-teal to-accent-teal-bright rounded-full blur-md opacity-20 group-hover:opacity-40 transition" />
+                  <img
+                    src={member.avatar}
+                    alt={member.name}
+                    className="relative w-24 h-24 rounded-full object-cover border-2 border-accent-teal/60"
+                  />
+                </div>
+                <h3 className="font-display text-xl font-bold text-white mb-1">{member.name}</h3>
+                <span className="text-accent-teal font-semibold text-xs uppercase tracking-wider mb-4 font-sans">{member.role}</span>
+                <ul className="text-xs text-text-muted-dark space-y-1.5 text-center font-sans border-t border-white/5 pt-4 w-full">
+                  {member.bullets.map((b, idx) => (
+                    <li key={idx} className="flex justify-center items-center gap-1.5">
+                      <span className="h-1 w-1 bg-accent-teal rounded-full" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section className="py-20 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.1),transparent_50%)] pointer-events-none" />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <h2 className="font-display text-3xl sm:text-5xl font-bold text-white leading-tight">
+            Join Our <span className="text-gradient-teal font-extrabold font-display">Journey</span>
+          </h2>
+          <p className="text-sm sm:text-lg text-text-muted-dark max-w-xl mx-auto leading-relaxed font-sans">
+            Ready to experience a live debrief and take your communication skills to the next level? Sign up or register for a slot today.
+          </p>
+          <div className="pt-4">
+            <Button onClick={handleJoinGD} className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal px-8 py-6 text-base font-semibold">
+              Join Live GD <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-white/5 bg-bg-dark py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-gradient-teal flex items-center justify-center font-display text-sm font-bold text-white shadow-glow-teal">
+              PL
+            </div>
+            <span className="font-display font-bold text-base tracking-tight text-white">
+              Prep<span className="text-gradient-teal font-extrabold">Lyt</span>
+            </span>
+          </div>
+          <div className="text-xs text-text-muted-dark font-medium">
+            © {new Date().getFullYear()} PrepLyt. All rights reserved. Moderated live group discussion software.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

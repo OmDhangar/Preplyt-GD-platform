@@ -194,7 +194,7 @@ function SessionsList() {
                       <div className="flex items-center gap-1 text-xs text-text-muted-light font-medium">
                         <Award className="h-4 w-4 text-accent-teal" /> Evaluation Available
                       </div>
-                      <Link to="/sessions/$id/results" params={{ id: s._id }}>
+                      <Link to="/results/$sessionId" params={{ sessionId: s._id }}>
                         <Button className="bg-accent-teal hover:bg-accent-teal-bright text-white text-xs px-3">
                           View Results
                         </Button>

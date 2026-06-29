@@ -9,39 +9,45 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UpcomingGdsRouteImport } from './routes/upcoming-gds'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as UpcomingGdsRouteRouteImport } from './routes/upcoming-gds/route'
+import { Route as AboutUsRouteRouteImport } from './routes/about-us/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthRegisterRouteImport } from './routes/auth.register'
-import { Route as AuthLoginRouteImport } from './routes/auth.login'
-import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AppProfileRouteImport } from './routes/_app.profile'
-import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppTemplatesIndexRouteImport } from './routes/_app.templates.index'
-import { Route as AppSessionsIndexRouteImport } from './routes/_app.sessions.index'
-import { Route as AuthVerifyTokenRouteImport } from './routes/auth.verify.$token'
-import { Route as AuthResetPasswordTokenRouteImport } from './routes/auth.reset-password.$token'
-import { Route as AuthGoogleCallbackRouteImport } from './routes/auth.google.callback'
-import { Route as AppTemplatesNewRouteImport } from './routes/_app.templates.new'
-import { Route as AppTemplatesIdRouteImport } from './routes/_app.templates.$id'
-import { Route as AppSessionsNewRouteImport } from './routes/_app.sessions.new'
-import { Route as AppSessionsIdRouteImport } from './routes/_app.sessions.$id'
-import { Route as AppResultsSessionIdRouteImport } from './routes/_app.results.$sessionId'
-import { Route as AppAdminInstructorsRouteImport } from './routes/_app.admin.instructors'
-import { Route as AppAdminInstructorGdsRouteImport } from './routes/_app.admin.instructor-gds'
-import { Route as AppSessionsIdIndexRouteImport } from './routes/_app.sessions.$id.index'
-import { Route as AppSessionsJoinCodeRouteImport } from './routes/_app.sessions.join.$code'
-import { Route as AppSessionsIdResultsRouteImport } from './routes/_app.sessions.$id.results'
-import { Route as AppSessionsIdEvaluateRouteImport } from './routes/_app.sessions.$id.evaluate'
+import { Route as AuthRegisterRouteRouteImport } from './routes/auth/register/route'
+import { Route as AuthLoginRouteRouteImport } from './routes/auth/login/route'
+import { Route as AuthForgotPasswordRouteRouteImport } from './routes/auth/forgot-password/route'
+import { Route as AppProfileRouteRouteImport } from './routes/_app/profile/route'
+import { Route as AppNotificationsRouteRouteImport } from './routes/_app/notifications/route'
+import { Route as AppDashboardRouteRouteImport } from './routes/_app/dashboard/route'
+import { Route as AuthVerifyTokenRouteRouteImport } from './routes/auth/verify/$token/route'
+import { Route as AuthResetPasswordTokenRouteRouteImport } from './routes/auth/reset-password/$token/route'
+import { Route as AuthGoogleCallbackRouteRouteImport } from './routes/auth/google/callback/route'
+import { Route as AppTemplatesNewRouteRouteImport } from './routes/_app/templates/new/route'
+import { Route as AppTemplatesIdRouteRouteImport } from './routes/_app/templates/$id/route'
+import { Route as AppSessionsNewRouteRouteImport } from './routes/_app/sessions/new/route'
+import { Route as AppSessionsIdRouteRouteImport } from './routes/_app/sessions/$id/route'
+import { Route as AppResultsSessionIdRouteRouteImport } from './routes/_app/results/$sessionId/route'
+import { Route as AppAdminInstructorsRouteRouteImport } from './routes/_app/admin/instructors/route'
+import { Route as AppAdminInstructorGdsRouteRouteImport } from './routes/_app/admin/instructor-gds/route'
+import { Route as AppTemplatesIndexRouteRouteImport } from './routes/_app/templates/index/route'
+import { Route as AppSessionsIndexRouteRouteImport } from './routes/_app/sessions/index/route'
+import { Route as AppSessionsJoinCodeRouteRouteImport } from './routes/_app/sessions/join/$code/route'
+import { Route as AppSessionsIdResultsRouteRouteImport } from './routes/_app/sessions/$id/results/route'
+import { Route as AppSessionsIdEvaluateRouteRouteImport } from './routes/_app/sessions/$id/evaluate/route'
+import { Route as AppSessionsIdIndexRouteRouteImport } from './routes/_app/sessions/$id/index/route'
 
-const UpcomingGdsRoute = UpcomingGdsRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UpcomingGdsRouteRoute = UpcomingGdsRouteRouteImport.update({
   id: '/upcoming-gds',
   path: '/upcoming-gds',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const AboutUsRouteRoute = AboutUsRouteRouteImport.update({
+  id: '/about-us',
+  path: '/about-us',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,200 +55,211 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRegisterRoute = AuthRegisterRouteImport.update({
+const AuthRegisterRouteRoute = AuthRegisterRouteRouteImport.update({
   id: '/auth/register',
   path: '/auth/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
+const AuthLoginRouteRoute = AuthLoginRouteRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+const AuthForgotPasswordRouteRoute = AuthForgotPasswordRouteRouteImport.update({
   id: '/auth/forgot-password',
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppProfileRoute = AppProfileRouteImport.update({
+const AppProfileRouteRoute = AppProfileRouteRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
-const AppNotificationsRoute = AppNotificationsRouteImport.update({
+const AppNotificationsRouteRoute = AppNotificationsRouteRouteImport.update({
   id: '/notifications',
   path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
+const AppDashboardRouteRoute = AppDashboardRouteRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppTemplatesIndexRoute = AppTemplatesIndexRouteImport.update({
-  id: '/templates/',
-  path: '/templates/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSessionsIndexRoute = AppSessionsIndexRouteImport.update({
-  id: '/sessions/',
-  path: '/sessions/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AuthVerifyTokenRoute = AuthVerifyTokenRouteImport.update({
+const AuthVerifyTokenRouteRoute = AuthVerifyTokenRouteRouteImport.update({
   id: '/auth/verify/$token',
   path: '/auth/verify/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthResetPasswordTokenRoute = AuthResetPasswordTokenRouteImport.update({
-  id: '/auth/reset-password/$token',
-  path: '/auth/reset-password/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
+const AuthResetPasswordTokenRouteRoute =
+  AuthResetPasswordTokenRouteRouteImport.update({
+    id: '/auth/reset-password/$token',
+    path: '/auth/reset-password/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthGoogleCallbackRouteRoute = AuthGoogleCallbackRouteRouteImport.update({
   id: '/auth/google/callback',
   path: '/auth/google/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppTemplatesNewRoute = AppTemplatesNewRouteImport.update({
+const AppTemplatesNewRouteRoute = AppTemplatesNewRouteRouteImport.update({
   id: '/templates/new',
   path: '/templates/new',
   getParentRoute: () => AppRoute,
 } as any)
-const AppTemplatesIdRoute = AppTemplatesIdRouteImport.update({
+const AppTemplatesIdRouteRoute = AppTemplatesIdRouteRouteImport.update({
   id: '/templates/$id',
   path: '/templates/$id',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSessionsNewRoute = AppSessionsNewRouteImport.update({
+const AppSessionsNewRouteRoute = AppSessionsNewRouteRouteImport.update({
   id: '/sessions/new',
   path: '/sessions/new',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSessionsIdRoute = AppSessionsIdRouteImport.update({
+const AppSessionsIdRouteRoute = AppSessionsIdRouteRouteImport.update({
   id: '/sessions/$id',
   path: '/sessions/$id',
   getParentRoute: () => AppRoute,
 } as any)
-const AppResultsSessionIdRoute = AppResultsSessionIdRouteImport.update({
-  id: '/results/$sessionId',
-  path: '/results/$sessionId',
+const AppResultsSessionIdRouteRoute =
+  AppResultsSessionIdRouteRouteImport.update({
+    id: '/results/$sessionId',
+    path: '/results/$sessionId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAdminInstructorsRouteRoute =
+  AppAdminInstructorsRouteRouteImport.update({
+    id: '/admin/instructors',
+    path: '/admin/instructors',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAdminInstructorGdsRouteRoute =
+  AppAdminInstructorGdsRouteRouteImport.update({
+    id: '/admin/instructor-gds',
+    path: '/admin/instructor-gds',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppTemplatesIndexRouteRoute = AppTemplatesIndexRouteRouteImport.update({
+  id: '/templates/',
+  path: '/templates',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminInstructorsRoute = AppAdminInstructorsRouteImport.update({
-  id: '/admin/instructors',
-  path: '/admin/instructors',
+const AppSessionsIndexRouteRoute = AppSessionsIndexRouteRouteImport.update({
+  id: '/sessions/',
+  path: '/sessions',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminInstructorGdsRoute = AppAdminInstructorGdsRouteImport.update({
-  id: '/admin/instructor-gds',
-  path: '/admin/instructor-gds',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSessionsIdIndexRoute = AppSessionsIdIndexRouteImport.update({
+const AppSessionsJoinCodeRouteRoute =
+  AppSessionsJoinCodeRouteRouteImport.update({
+    id: '/sessions/join/$code',
+    path: '/sessions/join/$code',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSessionsIdResultsRouteRoute =
+  AppSessionsIdResultsRouteRouteImport.update({
+    id: '/results',
+    path: '/results',
+    getParentRoute: () => AppSessionsIdRouteRoute,
+  } as any)
+const AppSessionsIdEvaluateRouteRoute =
+  AppSessionsIdEvaluateRouteRouteImport.update({
+    id: '/evaluate',
+    path: '/evaluate',
+    getParentRoute: () => AppSessionsIdRouteRoute,
+  } as any)
+const AppSessionsIdIndexRouteRoute = AppSessionsIdIndexRouteRouteImport.update({
   id: '/',
-  path: '/',
-  getParentRoute: () => AppSessionsIdRoute,
-} as any)
-const AppSessionsJoinCodeRoute = AppSessionsJoinCodeRouteImport.update({
-  id: '/sessions/join/$code',
-  path: '/sessions/join/$code',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSessionsIdResultsRoute = AppSessionsIdResultsRouteImport.update({
-  id: '/results',
-  path: '/results',
-  getParentRoute: () => AppSessionsIdRoute,
-} as any)
-const AppSessionsIdEvaluateRoute = AppSessionsIdEvaluateRouteImport.update({
-  id: '/evaluate',
-  path: '/evaluate',
-  getParentRoute: () => AppSessionsIdRoute,
+  path: '',
+  getParentRoute: () => AppSessionsIdRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/upcoming-gds': typeof UpcomingGdsRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/notifications': typeof AppNotificationsRoute
-  '/profile': typeof AppProfileRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
-  '/admin/instructor-gds': typeof AppAdminInstructorGdsRoute
-  '/admin/instructors': typeof AppAdminInstructorsRoute
-  '/results/$sessionId': typeof AppResultsSessionIdRoute
-  '/sessions/$id': typeof AppSessionsIdRouteWithChildren
-  '/sessions/new': typeof AppSessionsNewRoute
-  '/templates/$id': typeof AppTemplatesIdRoute
-  '/templates/new': typeof AppTemplatesNewRoute
-  '/auth/google/callback': typeof AuthGoogleCallbackRoute
-  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
-  '/auth/verify/$token': typeof AuthVerifyTokenRoute
-  '/sessions/': typeof AppSessionsIndexRoute
-  '/templates/': typeof AppTemplatesIndexRoute
-  '/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRoute
-  '/sessions/$id/results': typeof AppSessionsIdResultsRoute
-  '/sessions/join/$code': typeof AppSessionsJoinCodeRoute
-  '/sessions/$id/': typeof AppSessionsIdIndexRoute
+  '/about-us': typeof AboutUsRouteRoute
+  '/upcoming-gds': typeof UpcomingGdsRouteRoute
+  '/dashboard': typeof AppDashboardRouteRoute
+  '/notifications': typeof AppNotificationsRouteRoute
+  '/profile': typeof AppProfileRouteRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRouteRoute
+  '/auth/login': typeof AuthLoginRouteRoute
+  '/auth/register': typeof AuthRegisterRouteRoute
+  '/sessions/': typeof AppSessionsIndexRouteRoute
+  '/templates/': typeof AppTemplatesIndexRouteRoute
+  '/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
+  '/admin/instructors': typeof AppAdminInstructorsRouteRoute
+  '/results/$sessionId': typeof AppResultsSessionIdRouteRoute
+  '/sessions/$id': typeof AppSessionsIdRouteRouteWithChildren
+  '/sessions/new': typeof AppSessionsNewRouteRoute
+  '/templates/$id': typeof AppTemplatesIdRouteRoute
+  '/templates/new': typeof AppTemplatesNewRouteRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRouteRoute
+  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRouteRoute
+  '/auth/verify/$token': typeof AuthVerifyTokenRouteRoute
+  '/sessions/$id/': typeof AppSessionsIdIndexRouteRoute
+  '/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRouteRoute
+  '/sessions/$id/results': typeof AppSessionsIdResultsRouteRoute
+  '/sessions/join/$code': typeof AppSessionsJoinCodeRouteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/upcoming-gds': typeof UpcomingGdsRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/notifications': typeof AppNotificationsRoute
-  '/profile': typeof AppProfileRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
-  '/admin/instructor-gds': typeof AppAdminInstructorGdsRoute
-  '/admin/instructors': typeof AppAdminInstructorsRoute
-  '/results/$sessionId': typeof AppResultsSessionIdRoute
-  '/sessions/new': typeof AppSessionsNewRoute
-  '/templates/$id': typeof AppTemplatesIdRoute
-  '/templates/new': typeof AppTemplatesNewRoute
-  '/auth/google/callback': typeof AuthGoogleCallbackRoute
-  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
-  '/auth/verify/$token': typeof AuthVerifyTokenRoute
-  '/sessions': typeof AppSessionsIndexRoute
-  '/templates': typeof AppTemplatesIndexRoute
-  '/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRoute
-  '/sessions/$id/results': typeof AppSessionsIdResultsRoute
-  '/sessions/join/$code': typeof AppSessionsJoinCodeRoute
-  '/sessions/$id': typeof AppSessionsIdIndexRoute
+  '/about-us': typeof AboutUsRouteRoute
+  '/upcoming-gds': typeof UpcomingGdsRouteRoute
+  '/dashboard': typeof AppDashboardRouteRoute
+  '/notifications': typeof AppNotificationsRouteRoute
+  '/profile': typeof AppProfileRouteRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRouteRoute
+  '/auth/login': typeof AuthLoginRouteRoute
+  '/auth/register': typeof AuthRegisterRouteRoute
+  '/sessions': typeof AppSessionsIndexRouteRoute
+  '/templates': typeof AppTemplatesIndexRouteRoute
+  '/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
+  '/admin/instructors': typeof AppAdminInstructorsRouteRoute
+  '/results/$sessionId': typeof AppResultsSessionIdRouteRoute
+  '/sessions/$id': typeof AppSessionsIdIndexRouteRoute
+  '/sessions/new': typeof AppSessionsNewRouteRoute
+  '/templates/$id': typeof AppTemplatesIdRouteRoute
+  '/templates/new': typeof AppTemplatesNewRouteRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRouteRoute
+  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRouteRoute
+  '/auth/verify/$token': typeof AuthVerifyTokenRouteRoute
+  '/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRouteRoute
+  '/sessions/$id/results': typeof AppSessionsIdResultsRouteRoute
+  '/sessions/join/$code': typeof AppSessionsJoinCodeRouteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about-us': typeof AboutUsRouteRoute
+  '/upcoming-gds': typeof UpcomingGdsRouteRoute
   '/_app': typeof AppRouteWithChildren
-  '/upcoming-gds': typeof UpcomingGdsRoute
-  '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/notifications': typeof AppNotificationsRoute
-  '/_app/profile': typeof AppProfileRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
-  '/_app/admin/instructor-gds': typeof AppAdminInstructorGdsRoute
-  '/_app/admin/instructors': typeof AppAdminInstructorsRoute
-  '/_app/results/$sessionId': typeof AppResultsSessionIdRoute
-  '/_app/sessions/$id': typeof AppSessionsIdRouteWithChildren
-  '/_app/sessions/new': typeof AppSessionsNewRoute
-  '/_app/templates/$id': typeof AppTemplatesIdRoute
-  '/_app/templates/new': typeof AppTemplatesNewRoute
-  '/auth/google/callback': typeof AuthGoogleCallbackRoute
-  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
-  '/auth/verify/$token': typeof AuthVerifyTokenRoute
-  '/_app/sessions/': typeof AppSessionsIndexRoute
-  '/_app/templates/': typeof AppTemplatesIndexRoute
-  '/_app/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRoute
-  '/_app/sessions/$id/results': typeof AppSessionsIdResultsRoute
-  '/_app/sessions/join/$code': typeof AppSessionsJoinCodeRoute
-  '/_app/sessions/$id/': typeof AppSessionsIdIndexRoute
+  '/_app/dashboard': typeof AppDashboardRouteRoute
+  '/_app/notifications': typeof AppNotificationsRouteRoute
+  '/_app/profile': typeof AppProfileRouteRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRouteRoute
+  '/auth/login': typeof AuthLoginRouteRoute
+  '/auth/register': typeof AuthRegisterRouteRoute
+  '/_app/sessions/': typeof AppSessionsIndexRouteRoute
+  '/_app/templates/': typeof AppTemplatesIndexRouteRoute
+  '/_app/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
+  '/_app/admin/instructors': typeof AppAdminInstructorsRouteRoute
+  '/_app/results/$sessionId': typeof AppResultsSessionIdRouteRoute
+  '/_app/sessions/$id': typeof AppSessionsIdRouteRouteWithChildren
+  '/_app/sessions/new': typeof AppSessionsNewRouteRoute
+  '/_app/templates/$id': typeof AppTemplatesIdRouteRoute
+  '/_app/templates/new': typeof AppTemplatesNewRouteRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRouteRoute
+  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRouteRoute
+  '/auth/verify/$token': typeof AuthVerifyTokenRouteRoute
+  '/_app/sessions/$id/': typeof AppSessionsIdIndexRouteRoute
+  '/_app/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRouteRoute
+  '/_app/sessions/$id/results': typeof AppSessionsIdResultsRouteRoute
+  '/_app/sessions/join/$code': typeof AppSessionsJoinCodeRouteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about-us'
     | '/upcoming-gds'
     | '/dashboard'
     | '/notifications'
@@ -250,6 +267,8 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/sessions/'
+    | '/templates/'
     | '/admin/instructor-gds'
     | '/admin/instructors'
     | '/results/$sessionId'
@@ -260,15 +279,14 @@ export interface FileRouteTypes {
     | '/auth/google/callback'
     | '/auth/reset-password/$token'
     | '/auth/verify/$token'
-    | '/sessions/'
-    | '/templates/'
+    | '/sessions/$id/'
     | '/sessions/$id/evaluate'
     | '/sessions/$id/results'
     | '/sessions/join/$code'
-    | '/sessions/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about-us'
     | '/upcoming-gds'
     | '/dashboard'
     | '/notifications'
@@ -276,32 +294,35 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/sessions'
+    | '/templates'
     | '/admin/instructor-gds'
     | '/admin/instructors'
     | '/results/$sessionId'
+    | '/sessions/$id'
     | '/sessions/new'
     | '/templates/$id'
     | '/templates/new'
     | '/auth/google/callback'
     | '/auth/reset-password/$token'
     | '/auth/verify/$token'
-    | '/sessions'
-    | '/templates'
     | '/sessions/$id/evaluate'
     | '/sessions/$id/results'
     | '/sessions/join/$code'
-    | '/sessions/$id'
   id:
     | '__root__'
     | '/'
-    | '/_app'
+    | '/about-us'
     | '/upcoming-gds'
+    | '/_app'
     | '/_app/dashboard'
     | '/_app/notifications'
     | '/_app/profile'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/_app/sessions/'
+    | '/_app/templates/'
     | '/_app/admin/instructor-gds'
     | '/_app/admin/instructors'
     | '/_app/results/$sessionId'
@@ -312,40 +333,46 @@ export interface FileRouteTypes {
     | '/auth/google/callback'
     | '/auth/reset-password/$token'
     | '/auth/verify/$token'
-    | '/_app/sessions/'
-    | '/_app/templates/'
+    | '/_app/sessions/$id/'
     | '/_app/sessions/$id/evaluate'
     | '/_app/sessions/$id/results'
     | '/_app/sessions/join/$code'
-    | '/_app/sessions/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutUsRouteRoute: typeof AboutUsRouteRoute
+  UpcomingGdsRouteRoute: typeof UpcomingGdsRouteRoute
   AppRoute: typeof AppRouteWithChildren
-  UpcomingGdsRoute: typeof UpcomingGdsRoute
-  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
-  AuthLoginRoute: typeof AuthLoginRoute
-  AuthRegisterRoute: typeof AuthRegisterRoute
-  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
-  AuthResetPasswordTokenRoute: typeof AuthResetPasswordTokenRoute
-  AuthVerifyTokenRoute: typeof AuthVerifyTokenRoute
+  AuthForgotPasswordRouteRoute: typeof AuthForgotPasswordRouteRoute
+  AuthLoginRouteRoute: typeof AuthLoginRouteRoute
+  AuthRegisterRouteRoute: typeof AuthRegisterRouteRoute
+  AuthGoogleCallbackRouteRoute: typeof AuthGoogleCallbackRouteRoute
+  AuthResetPasswordTokenRouteRoute: typeof AuthResetPasswordTokenRouteRoute
+  AuthVerifyTokenRouteRoute: typeof AuthVerifyTokenRouteRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/upcoming-gds': {
-      id: '/upcoming-gds'
-      path: '/upcoming-gds'
-      fullPath: '/upcoming-gds'
-      preLoaderRoute: typeof UpcomingGdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/upcoming-gds': {
+      id: '/upcoming-gds'
+      path: '/upcoming-gds'
+      fullPath: '/upcoming-gds'
+      preLoaderRoute: typeof UpcomingGdsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about-us': {
+      id: '/about-us'
+      path: '/about-us'
+      fullPath: '/about-us'
+      preLoaderRoute: typeof AboutUsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -359,219 +386,219 @@ declare module '@tanstack/react-router' {
       id: '/auth/register'
       path: '/auth/register'
       fullPath: '/auth/register'
-      preLoaderRoute: typeof AuthRegisterRouteImport
+      preLoaderRoute: typeof AuthRegisterRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
       fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
+      preLoaderRoute: typeof AuthLoginRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/forgot-password': {
       id: '/auth/forgot-password'
       path: '/auth/forgot-password'
       fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      preLoaderRoute: typeof AuthForgotPasswordRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/profile': {
       id: '/_app/profile'
       path: '/profile'
       fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
+      preLoaderRoute: typeof AppProfileRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/notifications': {
       id: '/_app/notifications'
       path: '/notifications'
       fullPath: '/notifications'
-      preLoaderRoute: typeof AppNotificationsRouteImport
+      preLoaderRoute: typeof AppNotificationsRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/templates/': {
-      id: '/_app/templates/'
-      path: '/templates'
-      fullPath: '/templates/'
-      preLoaderRoute: typeof AppTemplatesIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sessions/': {
-      id: '/_app/sessions/'
-      path: '/sessions'
-      fullPath: '/sessions/'
-      preLoaderRoute: typeof AppSessionsIndexRouteImport
+      preLoaderRoute: typeof AppDashboardRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/auth/verify/$token': {
       id: '/auth/verify/$token'
       path: '/auth/verify/$token'
       fullPath: '/auth/verify/$token'
-      preLoaderRoute: typeof AuthVerifyTokenRouteImport
+      preLoaderRoute: typeof AuthVerifyTokenRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/reset-password/$token': {
       id: '/auth/reset-password/$token'
       path: '/auth/reset-password/$token'
       fullPath: '/auth/reset-password/$token'
-      preLoaderRoute: typeof AuthResetPasswordTokenRouteImport
+      preLoaderRoute: typeof AuthResetPasswordTokenRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/google/callback': {
       id: '/auth/google/callback'
       path: '/auth/google/callback'
       fullPath: '/auth/google/callback'
-      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
+      preLoaderRoute: typeof AuthGoogleCallbackRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/templates/new': {
       id: '/_app/templates/new'
       path: '/templates/new'
       fullPath: '/templates/new'
-      preLoaderRoute: typeof AppTemplatesNewRouteImport
+      preLoaderRoute: typeof AppTemplatesNewRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/templates/$id': {
       id: '/_app/templates/$id'
       path: '/templates/$id'
       fullPath: '/templates/$id'
-      preLoaderRoute: typeof AppTemplatesIdRouteImport
+      preLoaderRoute: typeof AppTemplatesIdRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sessions/new': {
       id: '/_app/sessions/new'
       path: '/sessions/new'
       fullPath: '/sessions/new'
-      preLoaderRoute: typeof AppSessionsNewRouteImport
+      preLoaderRoute: typeof AppSessionsNewRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sessions/$id': {
       id: '/_app/sessions/$id'
       path: '/sessions/$id'
       fullPath: '/sessions/$id'
-      preLoaderRoute: typeof AppSessionsIdRouteImport
+      preLoaderRoute: typeof AppSessionsIdRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/results/$sessionId': {
       id: '/_app/results/$sessionId'
       path: '/results/$sessionId'
       fullPath: '/results/$sessionId'
-      preLoaderRoute: typeof AppResultsSessionIdRouteImport
+      preLoaderRoute: typeof AppResultsSessionIdRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin/instructors': {
       id: '/_app/admin/instructors'
       path: '/admin/instructors'
       fullPath: '/admin/instructors'
-      preLoaderRoute: typeof AppAdminInstructorsRouteImport
+      preLoaderRoute: typeof AppAdminInstructorsRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin/instructor-gds': {
       id: '/_app/admin/instructor-gds'
       path: '/admin/instructor-gds'
       fullPath: '/admin/instructor-gds'
-      preLoaderRoute: typeof AppAdminInstructorGdsRouteImport
+      preLoaderRoute: typeof AppAdminInstructorGdsRouteRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/sessions/$id/': {
-      id: '/_app/sessions/$id/'
-      path: '/'
-      fullPath: '/sessions/$id/'
-      preLoaderRoute: typeof AppSessionsIdIndexRouteImport
-      parentRoute: typeof AppSessionsIdRoute
+    '/_app/templates/': {
+      id: '/_app/templates/'
+      path: '/templates'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof AppTemplatesIndexRouteRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sessions/': {
+      id: '/_app/sessions/'
+      path: '/sessions'
+      fullPath: '/sessions/'
+      preLoaderRoute: typeof AppSessionsIndexRouteRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/sessions/join/$code': {
       id: '/_app/sessions/join/$code'
       path: '/sessions/join/$code'
       fullPath: '/sessions/join/$code'
-      preLoaderRoute: typeof AppSessionsJoinCodeRouteImport
+      preLoaderRoute: typeof AppSessionsJoinCodeRouteRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sessions/$id/results': {
       id: '/_app/sessions/$id/results'
       path: '/results'
       fullPath: '/sessions/$id/results'
-      preLoaderRoute: typeof AppSessionsIdResultsRouteImport
-      parentRoute: typeof AppSessionsIdRoute
+      preLoaderRoute: typeof AppSessionsIdResultsRouteRouteImport
+      parentRoute: typeof AppSessionsIdRouteRoute
     }
     '/_app/sessions/$id/evaluate': {
       id: '/_app/sessions/$id/evaluate'
       path: '/evaluate'
       fullPath: '/sessions/$id/evaluate'
-      preLoaderRoute: typeof AppSessionsIdEvaluateRouteImport
-      parentRoute: typeof AppSessionsIdRoute
+      preLoaderRoute: typeof AppSessionsIdEvaluateRouteRouteImport
+      parentRoute: typeof AppSessionsIdRouteRoute
+    }
+    '/_app/sessions/$id/': {
+      id: '/_app/sessions/$id/'
+      path: ''
+      fullPath: '/sessions/$id/'
+      preLoaderRoute: typeof AppSessionsIdIndexRouteRouteImport
+      parentRoute: typeof AppSessionsIdRouteRoute
     }
   }
 }
 
-interface AppSessionsIdRouteChildren {
-  AppSessionsIdEvaluateRoute: typeof AppSessionsIdEvaluateRoute
-  AppSessionsIdResultsRoute: typeof AppSessionsIdResultsRoute
-  AppSessionsIdIndexRoute: typeof AppSessionsIdIndexRoute
+interface AppSessionsIdRouteRouteChildren {
+  AppSessionsIdIndexRouteRoute: typeof AppSessionsIdIndexRouteRoute
+  AppSessionsIdEvaluateRouteRoute: typeof AppSessionsIdEvaluateRouteRoute
+  AppSessionsIdResultsRouteRoute: typeof AppSessionsIdResultsRouteRoute
 }
 
-const AppSessionsIdRouteChildren: AppSessionsIdRouteChildren = {
-  AppSessionsIdEvaluateRoute: AppSessionsIdEvaluateRoute,
-  AppSessionsIdResultsRoute: AppSessionsIdResultsRoute,
-  AppSessionsIdIndexRoute: AppSessionsIdIndexRoute,
+const AppSessionsIdRouteRouteChildren: AppSessionsIdRouteRouteChildren = {
+  AppSessionsIdIndexRouteRoute: AppSessionsIdIndexRouteRoute,
+  AppSessionsIdEvaluateRouteRoute: AppSessionsIdEvaluateRouteRoute,
+  AppSessionsIdResultsRouteRoute: AppSessionsIdResultsRouteRoute,
 }
 
-const AppSessionsIdRouteWithChildren = AppSessionsIdRoute._addFileChildren(
-  AppSessionsIdRouteChildren,
-)
+const AppSessionsIdRouteRouteWithChildren =
+  AppSessionsIdRouteRoute._addFileChildren(AppSessionsIdRouteRouteChildren)
 
 interface AppRouteChildren {
-  AppDashboardRoute: typeof AppDashboardRoute
-  AppNotificationsRoute: typeof AppNotificationsRoute
-  AppProfileRoute: typeof AppProfileRoute
-  AppAdminInstructorGdsRoute: typeof AppAdminInstructorGdsRoute
-  AppAdminInstructorsRoute: typeof AppAdminInstructorsRoute
-  AppResultsSessionIdRoute: typeof AppResultsSessionIdRoute
-  AppSessionsIdRoute: typeof AppSessionsIdRouteWithChildren
-  AppSessionsNewRoute: typeof AppSessionsNewRoute
-  AppTemplatesIdRoute: typeof AppTemplatesIdRoute
-  AppTemplatesNewRoute: typeof AppTemplatesNewRoute
-  AppSessionsIndexRoute: typeof AppSessionsIndexRoute
-  AppTemplatesIndexRoute: typeof AppTemplatesIndexRoute
-  AppSessionsJoinCodeRoute: typeof AppSessionsJoinCodeRoute
+  AppDashboardRouteRoute: typeof AppDashboardRouteRoute
+  AppNotificationsRouteRoute: typeof AppNotificationsRouteRoute
+  AppProfileRouteRoute: typeof AppProfileRouteRoute
+  AppSessionsIndexRouteRoute: typeof AppSessionsIndexRouteRoute
+  AppTemplatesIndexRouteRoute: typeof AppTemplatesIndexRouteRoute
+  AppAdminInstructorGdsRouteRoute: typeof AppAdminInstructorGdsRouteRoute
+  AppAdminInstructorsRouteRoute: typeof AppAdminInstructorsRouteRoute
+  AppResultsSessionIdRouteRoute: typeof AppResultsSessionIdRouteRoute
+  AppSessionsIdRouteRoute: typeof AppSessionsIdRouteRouteWithChildren
+  AppSessionsNewRouteRoute: typeof AppSessionsNewRouteRoute
+  AppTemplatesIdRouteRoute: typeof AppTemplatesIdRouteRoute
+  AppTemplatesNewRouteRoute: typeof AppTemplatesNewRouteRoute
+  AppSessionsJoinCodeRouteRoute: typeof AppSessionsJoinCodeRouteRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppDashboardRoute: AppDashboardRoute,
-  AppNotificationsRoute: AppNotificationsRoute,
-  AppProfileRoute: AppProfileRoute,
-  AppAdminInstructorGdsRoute: AppAdminInstructorGdsRoute,
-  AppAdminInstructorsRoute: AppAdminInstructorsRoute,
-  AppResultsSessionIdRoute: AppResultsSessionIdRoute,
-  AppSessionsIdRoute: AppSessionsIdRouteWithChildren,
-  AppSessionsNewRoute: AppSessionsNewRoute,
-  AppTemplatesIdRoute: AppTemplatesIdRoute,
-  AppTemplatesNewRoute: AppTemplatesNewRoute,
-  AppSessionsIndexRoute: AppSessionsIndexRoute,
-  AppTemplatesIndexRoute: AppTemplatesIndexRoute,
-  AppSessionsJoinCodeRoute: AppSessionsJoinCodeRoute,
+  AppDashboardRouteRoute: AppDashboardRouteRoute,
+  AppNotificationsRouteRoute: AppNotificationsRouteRoute,
+  AppProfileRouteRoute: AppProfileRouteRoute,
+  AppSessionsIndexRouteRoute: AppSessionsIndexRouteRoute,
+  AppTemplatesIndexRouteRoute: AppTemplatesIndexRouteRoute,
+  AppAdminInstructorGdsRouteRoute: AppAdminInstructorGdsRouteRoute,
+  AppAdminInstructorsRouteRoute: AppAdminInstructorsRouteRoute,
+  AppResultsSessionIdRouteRoute: AppResultsSessionIdRouteRoute,
+  AppSessionsIdRouteRoute: AppSessionsIdRouteRouteWithChildren,
+  AppSessionsNewRouteRoute: AppSessionsNewRouteRoute,
+  AppTemplatesIdRouteRoute: AppTemplatesIdRouteRoute,
+  AppTemplatesNewRouteRoute: AppTemplatesNewRouteRoute,
+  AppSessionsJoinCodeRouteRoute: AppSessionsJoinCodeRouteRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutUsRouteRoute: AboutUsRouteRoute,
+  UpcomingGdsRouteRoute: UpcomingGdsRouteRoute,
   AppRoute: AppRouteWithChildren,
-  UpcomingGdsRoute: UpcomingGdsRoute,
-  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
-  AuthLoginRoute: AuthLoginRoute,
-  AuthRegisterRoute: AuthRegisterRoute,
-  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
-  AuthResetPasswordTokenRoute: AuthResetPasswordTokenRoute,
-  AuthVerifyTokenRoute: AuthVerifyTokenRoute,
+  AuthForgotPasswordRouteRoute: AuthForgotPasswordRouteRoute,
+  AuthLoginRouteRoute: AuthLoginRouteRoute,
+  AuthRegisterRouteRoute: AuthRegisterRouteRoute,
+  AuthGoogleCallbackRouteRoute: AuthGoogleCallbackRouteRoute,
+  AuthResetPasswordTokenRouteRoute: AuthResetPasswordTokenRouteRoute,
+  AuthVerifyTokenRouteRoute: AuthVerifyTokenRouteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

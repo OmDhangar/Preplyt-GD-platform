@@ -124,6 +124,7 @@ function TemplateBuilder() {
   return (
     <div>
       <PageHeader
+        backUrl="/templates"
         title={name || "Template"}
         subtitle="build your evaluation rubric"
         pill={<CornerPillBadge tone={data.status === "published" ? "teal" : "dark"}>

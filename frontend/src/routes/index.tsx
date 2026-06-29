@@ -48,6 +48,7 @@ function LandingPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
             <Link to="/upcoming-gds" className="hover:text-accent-teal transition">Upcoming GDs</Link>
+            <Link to="/about-us" className="hover:text-accent-teal transition">About Us</Link>
             <a href="#how-it-works" className="hover:text-accent-teal transition">How it works</a>
             <a href="#mentors" className="hover:text-accent-teal transition">Meet Mentors</a>
             <a href="#faq" className="hover:text-accent-teal transition">FAQ</a>

@@ -97,6 +97,24 @@ async function main() {
     return { id: res.data.data.user._id, token: res.data.data.accessToken };
   });
 
+  await test('Admin logs in and verifies instructors', async () => {
+    const adminLoginRes = await api('POST', '/api/auth/login', {
+      body: { email: 'admin@gdeval.dev', password: 'Demo@1234' },
+    });
+    assertStatus(adminLoginRes, 200, 'admin login');
+    const adminToken = adminLoginRes.data.data.accessToken;
+
+    const verifyRes1 = await api('PATCH', `/api/users/${instructor.id}/verify`, {
+      token: adminToken,
+    });
+    assertStatus(verifyRes1, 200, 'verify instructor 1');
+
+    const verifyRes2 = await api('PATCH', `/api/users/${instructor2.id}/verify`, {
+      token: adminToken,
+    });
+    assertStatus(verifyRes2, 200, 'verify instructor 2');
+  });
+
   for (let i = 0; i < 3; i++) {
     const s = await test(`POST /api/auth/register — student ${i + 1}`, async () => {
       const res = await api('POST', '/api/auth/register', {

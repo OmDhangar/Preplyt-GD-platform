@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { apiGet } from "@/lib/api";
 import { PageHeader } from "@/components/brand/PageHeader";
 import { StatCard } from "@/components/brand/StatCard";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ResultRow {
   studentId: string;
@@ -19,12 +20,29 @@ export const Route = createFileRoute("/_app/sessions/$id/results")({
 });
 
 function ResultsPage() {
+  const { role } = useAuth();
   const { id } = Route.useParams();
+
   const { data: resultsData } = useQuery({
+    enabled: role !== "student",
     queryKey: ["sessionResults", id],
     queryFn: async () =>
       (await apiGet<{ results: any[] }>(`/evaluations/sessions/${id}/results`)).data,
   });
+
+  if (role === "student") {
+    return (
+      <div className="max-w-2xl bg-white border border-red-200 rounded-2xl p-8 text-center space-y-4 shadow-elegant mt-6">
+        <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-xl text-red-600">
+          ⚠️
+        </div>
+        <h2 className="text-xl font-bold text-text-on-light">Access Denied</h2>
+        <p className="text-sm text-text-muted-light max-w-md mx-auto">
+          Students are not authorized to view the instructor overview results. Please view your results scorecard in your personal dashboard or scorecard view.
+        </p>
+      </div>
+    );
+  }
 
   const rows = useMemo<ResultRow[]>(() => {
     return (resultsData?.results || []).map((r) => ({
@@ -42,7 +60,11 @@ function ResultsPage() {
 
   return (
     <div>
-      <PageHeader title="Session results" subtitle="instructor overview" />
+      <PageHeader
+        backUrl={`/sessions/${id}`}
+        title="Session results"
+        subtitle="instructor overview"
+      />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatCard label="Students evaluated" value={rows.length} />
         <StatCard label="Average score" value={`${avg}%`} accent="amber" />
