@@ -8,5 +8,7 @@ router.use('/evaluations',   require('./evaluation.routes'));
 router.use('/payments',      require('./payment.routes'));
 router.use('/notifications', require('./notification.routes'));
 router.use('/dashboard',     require('./dashboard.routes'));
+router.use('/b2b-requests',  require('./b2bRequest.routes'));
 
 module.exports = router;
+

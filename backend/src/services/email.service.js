@@ -344,6 +344,45 @@ const sendPaymentConfirmation = (user, payment, session) =>
     `),
   });
 
+// ── 12. B2B Request Admin Notification ──────────────────────────────────────────
+const sendB2bAdminNotification = (b2bRequest) => {
+  const adminEmail = process.env.GOOGLE_ADMIN_EMAIL || process.env.SMTP_USER;
+  return sendEmail({
+    to:      adminEmail,
+    subject: `🏢 New B2B Pilot Request: ${b2bRequest.college}`,
+    html:    wrap('New B2B Pilot Request', `
+      <p>A new institute has requested a Group Discussion (GD) pilot session.</p>
+      <div style="background:#f0f7ff;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #1a56db">
+        <p style="margin:4px 0"><strong>College:</strong> ${b2bRequest.college}</p>
+        <p style="margin:4px 0"><strong>Name:</strong> ${b2bRequest.name}</p>
+        <p style="margin:4px 0"><strong>Designation:</strong> ${b2bRequest.designation}</p>
+        <p style="margin:4px 0"><strong>City:</strong> ${b2bRequest.city}</p>
+        <p style="margin:4px 0"><strong>Approx. Students:</strong> ${b2bRequest.students}</p>
+        <p style="margin:4px 0"><strong>Phone:</strong> ${b2bRequest.phone}</p>
+        <p style="margin:4px 0"><strong>Email:</strong> ${b2bRequest.email}</p>
+      </div>
+      <p>Please log in to your admin dashboard to review and manage this request.</p>
+    `),
+  });
+};
+
+// ── 13. B2B Request Thank You (Institute) ────────────────────────────────────────
+const sendB2bThankYou = (b2bRequest) => {
+  return sendEmail({
+    to:      b2bRequest.email,
+    subject: 'Thank You for Requesting a Preplyt Pilot Session!',
+    html:    wrap('Thank You for Reaching Out!', `
+      <p>Dear <strong>${b2bRequest.name}</strong>,</p>
+      <p>Thank you for your interest in PrepLyt's B2B program! We have received your request for a pilot session for <strong>${b2bRequest.college}</strong>.</p>
+      <p>Our team is currently reviewing the details of your batch (approx. <strong>${b2bRequest.students} students</strong>) and we will reach out to you within the next 24 hours to schedule the session.</p>
+      <p>If you have any urgent questions, feel free to reply directly to this email or reach out to us at <a href="mailto:preplyt1@gmail.com">preplyt1@gmail.com</a>.</p>
+      <br/>
+      <p>Best regards,</p>
+      <p><strong>The PrepLyt Team</strong></p>
+    `),
+  });
+};
+
 module.exports = {
   sendEmail,
   sendWelcome,
@@ -358,4 +397,7 @@ module.exports = {
   sendInstructorRejected,
   sendResultsPublished,
   sendPaymentConfirmation,
+  sendB2bAdminNotification,
+  sendB2bThankYou,
 };
+

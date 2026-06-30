@@ -49,6 +49,7 @@ function LandingPage() {
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
             <Link to="/upcoming-gds" className="hover:text-accent-teal transition">Upcoming GDs</Link>
             <Link to="/about-us" className="hover:text-accent-teal transition">About Us</Link>
+            <Link to="/b2b" className="hover:text-accent-teal transition">For Institutes</Link>
             <a href="#how-it-works" className="hover:text-accent-teal transition">How it works</a>
             <a href="#mentors" className="hover:text-accent-teal transition">Meet Mentors</a>
             <a href="#faq" className="hover:text-accent-teal transition">FAQ</a>
@@ -92,9 +93,11 @@ function LandingPage() {
               <Button onClick={handleJoinGD} className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal px-8 py-6 text-base font-semibold">
                 Join Upcoming GD
               </Button>
-              <Button variant="outline" onClick={() => toast.success("Partnership application requested!")} className="border-white/10 text-white bg-white/5 hover:bg-white/10 px-8 py-6 text-base font-semibold">
-                Partner with us
-              </Button>
+              <Link to="/b2b">
+                <Button variant="outline" className="border-white/10 text-white bg-white/5 hover:bg-white/10 px-8 py-6 text-base font-semibold">
+                  Partner with us
+                </Button>
+              </Link>
             </div>
           </div>
 

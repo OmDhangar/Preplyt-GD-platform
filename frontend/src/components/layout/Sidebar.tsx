@@ -13,6 +13,7 @@ import {
   X,
   ShieldCheck,
   FolderKanban,
+  Building2,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -30,11 +31,13 @@ export function Sidebar() {
       ? [
           { to: "/admin/instructors", label: "Verify Instructors", Icon: ShieldCheck },
           { to: "/admin/instructor-gds", label: "Instructor GDs", Icon: FolderKanban },
+          { to: "/admin/b2b-requests", label: "B2B Requests", Icon: Building2 },
         ]
       : []),
     { to: "/notifications", label: "Notifications", Icon: Bell },
     { to: "/profile", label: "Profile", Icon: UserIcon },
   ];
+
 
   return (
     <>

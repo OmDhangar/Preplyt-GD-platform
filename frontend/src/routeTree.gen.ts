@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as UpcomingGdsRouteRouteImport } from './routes/upcoming-gds/route'
+import { Route as B2bRouteRouteImport } from './routes/b2b/route'
 import { Route as AboutUsRouteRouteImport } from './routes/about-us/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRegisterRouteRouteImport } from './routes/auth/register/route'
@@ -29,6 +30,7 @@ import { Route as AppSessionsIdRouteRouteImport } from './routes/_app/sessions/$
 import { Route as AppResultsSessionIdRouteRouteImport } from './routes/_app/results/$sessionId/route'
 import { Route as AppAdminInstructorsRouteRouteImport } from './routes/_app/admin/instructors/route'
 import { Route as AppAdminInstructorGdsRouteRouteImport } from './routes/_app/admin/instructor-gds/route'
+import { Route as AppAdminB2bRequestsRouteRouteImport } from './routes/_app/admin/b2b-requests/route'
 import { Route as AppTemplatesIndexRouteRouteImport } from './routes/_app/templates/index/route'
 import { Route as AppSessionsIndexRouteRouteImport } from './routes/_app/sessions/index/route'
 import { Route as AppSessionsJoinCodeRouteRouteImport } from './routes/_app/sessions/join/$code/route'
@@ -43,6 +45,11 @@ const AppRoute = AppRouteImport.update({
 const UpcomingGdsRouteRoute = UpcomingGdsRouteRouteImport.update({
   id: '/upcoming-gds',
   path: '/upcoming-gds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const B2bRouteRoute = B2bRouteRouteImport.update({
+  id: '/b2b',
+  path: '/b2b',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutUsRouteRoute = AboutUsRouteRouteImport.update({
@@ -139,6 +146,12 @@ const AppAdminInstructorGdsRouteRoute =
     path: '/admin/instructor-gds',
     getParentRoute: () => AppRoute,
   } as any)
+const AppAdminB2bRequestsRouteRoute =
+  AppAdminB2bRequestsRouteRouteImport.update({
+    id: '/admin/b2b-requests',
+    path: '/admin/b2b-requests',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppTemplatesIndexRouteRoute = AppTemplatesIndexRouteRouteImport.update({
   id: '/templates/',
   path: '/templates',
@@ -176,6 +189,7 @@ const AppSessionsIdIndexRouteRoute = AppSessionsIdIndexRouteRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRouteRoute
+  '/b2b': typeof B2bRouteRoute
   '/upcoming-gds': typeof UpcomingGdsRouteRoute
   '/dashboard': typeof AppDashboardRouteRoute
   '/notifications': typeof AppNotificationsRouteRoute
@@ -185,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRouteRoute
   '/sessions/': typeof AppSessionsIndexRouteRoute
   '/templates/': typeof AppTemplatesIndexRouteRoute
+  '/admin/b2b-requests': typeof AppAdminB2bRequestsRouteRoute
   '/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
   '/admin/instructors': typeof AppAdminInstructorsRouteRoute
   '/results/$sessionId': typeof AppResultsSessionIdRouteRoute
@@ -203,6 +218,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRouteRoute
+  '/b2b': typeof B2bRouteRoute
   '/upcoming-gds': typeof UpcomingGdsRouteRoute
   '/dashboard': typeof AppDashboardRouteRoute
   '/notifications': typeof AppNotificationsRouteRoute
@@ -212,6 +228,7 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRouteRoute
   '/sessions': typeof AppSessionsIndexRouteRoute
   '/templates': typeof AppTemplatesIndexRouteRoute
+  '/admin/b2b-requests': typeof AppAdminB2bRequestsRouteRoute
   '/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
   '/admin/instructors': typeof AppAdminInstructorsRouteRoute
   '/results/$sessionId': typeof AppResultsSessionIdRouteRoute
@@ -230,6 +247,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRouteRoute
+  '/b2b': typeof B2bRouteRoute
   '/upcoming-gds': typeof UpcomingGdsRouteRoute
   '/_app': typeof AppRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRouteRoute
@@ -240,6 +258,7 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRouteRoute
   '/_app/sessions/': typeof AppSessionsIndexRouteRoute
   '/_app/templates/': typeof AppTemplatesIndexRouteRoute
+  '/_app/admin/b2b-requests': typeof AppAdminB2bRequestsRouteRoute
   '/_app/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
   '/_app/admin/instructors': typeof AppAdminInstructorsRouteRoute
   '/_app/results/$sessionId': typeof AppResultsSessionIdRouteRoute
@@ -260,6 +279,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about-us'
+    | '/b2b'
     | '/upcoming-gds'
     | '/dashboard'
     | '/notifications'
@@ -269,6 +289,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/sessions/'
     | '/templates/'
+    | '/admin/b2b-requests'
     | '/admin/instructor-gds'
     | '/admin/instructors'
     | '/results/$sessionId'
@@ -287,6 +308,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about-us'
+    | '/b2b'
     | '/upcoming-gds'
     | '/dashboard'
     | '/notifications'
@@ -296,6 +318,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/sessions'
     | '/templates'
+    | '/admin/b2b-requests'
     | '/admin/instructor-gds'
     | '/admin/instructors'
     | '/results/$sessionId'
@@ -313,6 +336,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about-us'
+    | '/b2b'
     | '/upcoming-gds'
     | '/_app'
     | '/_app/dashboard'
@@ -323,6 +347,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/_app/sessions/'
     | '/_app/templates/'
+    | '/_app/admin/b2b-requests'
     | '/_app/admin/instructor-gds'
     | '/_app/admin/instructors'
     | '/_app/results/$sessionId'
@@ -342,6 +367,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutUsRouteRoute: typeof AboutUsRouteRoute
+  B2bRouteRoute: typeof B2bRouteRoute
   UpcomingGdsRouteRoute: typeof UpcomingGdsRouteRoute
   AppRoute: typeof AppRouteWithChildren
   AuthForgotPasswordRouteRoute: typeof AuthForgotPasswordRouteRoute
@@ -366,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/upcoming-gds'
       fullPath: '/upcoming-gds'
       preLoaderRoute: typeof UpcomingGdsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/b2b': {
+      id: '/b2b'
+      path: '/b2b'
+      fullPath: '/b2b'
+      preLoaderRoute: typeof B2bRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about-us': {
@@ -494,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminInstructorGdsRouteRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin/b2b-requests': {
+      id: '/_app/admin/b2b-requests'
+      path: '/admin/b2b-requests'
+      fullPath: '/admin/b2b-requests'
+      preLoaderRoute: typeof AppAdminB2bRequestsRouteRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/templates/': {
       id: '/_app/templates/'
       path: '/templates'
@@ -560,6 +600,7 @@ interface AppRouteChildren {
   AppProfileRouteRoute: typeof AppProfileRouteRoute
   AppSessionsIndexRouteRoute: typeof AppSessionsIndexRouteRoute
   AppTemplatesIndexRouteRoute: typeof AppTemplatesIndexRouteRoute
+  AppAdminB2bRequestsRouteRoute: typeof AppAdminB2bRequestsRouteRoute
   AppAdminInstructorGdsRouteRoute: typeof AppAdminInstructorGdsRouteRoute
   AppAdminInstructorsRouteRoute: typeof AppAdminInstructorsRouteRoute
   AppResultsSessionIdRouteRoute: typeof AppResultsSessionIdRouteRoute
@@ -576,6 +617,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRouteRoute: AppProfileRouteRoute,
   AppSessionsIndexRouteRoute: AppSessionsIndexRouteRoute,
   AppTemplatesIndexRouteRoute: AppTemplatesIndexRouteRoute,
+  AppAdminB2bRequestsRouteRoute: AppAdminB2bRequestsRouteRoute,
   AppAdminInstructorGdsRouteRoute: AppAdminInstructorGdsRouteRoute,
   AppAdminInstructorsRouteRoute: AppAdminInstructorsRouteRoute,
   AppResultsSessionIdRouteRoute: AppResultsSessionIdRouteRoute,
@@ -591,6 +633,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutUsRouteRoute: AboutUsRouteRoute,
+  B2bRouteRoute: B2bRouteRoute,
   UpcomingGdsRouteRoute: UpcomingGdsRouteRoute,
   AppRoute: AppRouteWithChildren,
   AuthForgotPasswordRouteRoute: AuthForgotPasswordRouteRoute,
