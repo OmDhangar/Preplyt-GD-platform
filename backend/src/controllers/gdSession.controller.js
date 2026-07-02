@@ -160,8 +160,9 @@ exports.getSessions = asyncHandler(async (req, res) => {
 
 // ── GET /api/sessions/public/upcoming ─────────────────────────────────────────
 exports.getPublicUpcomingSessions = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 20, order = 'asc' } = req.query;
   const skip = (page - 1) * limit;
+  const sortOrder = order === 'desc' ? -1 : 1;
 
   const filter = {
     status: SESSION_STATUS.SCHEDULED,
@@ -171,7 +172,7 @@ exports.getPublicUpcomingSessions = asyncHandler(async (req, res) => {
   const sessions = await GdSession
     .find(filter)
     .populate('instructorId', 'name email avatar')
-    .sort({ scheduledAt: 1 })
+    .sort({ scheduledAt: sortOrder })
     .skip(skip)
     .limit(Number(limit));
 

@@ -160,6 +160,14 @@ export interface ApiEnvelope<T> {
   success: boolean;
   message?: string;
   data: T;
-  meta?: { page: number; limit: number; total: number; pages: number };
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    totalPages?: number;
+    hasNext?: boolean;
+    hasPrev?: boolean;
+  };
   details?: { field: string; message: string }[];
 }

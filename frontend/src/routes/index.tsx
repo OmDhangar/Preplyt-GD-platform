@@ -1,6 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/auth-store";
+import { apiGet } from "@/lib/api";
+import type { Session } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -12,6 +16,11 @@ import {
   MessageSquare,
   Calendar,
   ChevronDown,
+  Clock,
+  User,
+  Tag,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +33,21 @@ function LandingPage() {
   const { accessToken } = useAuthStore();
   const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const limit = 3;
+
+  const { data: upcomingData, isLoading: isUpcomingLoading } = useQuery({
+    queryKey: ["public-upcoming-sessions", page],
+    queryFn: async () => {
+      return await apiGet<Session[]>("/sessions/public/upcoming", {
+        params: { page, limit, order: "asc" },
+      });
+    },
+  });
+
+  const sessions = upcomingData?.data || [];
+  const meta = upcomingData?.meta;
+  const totalPages = meta?.totalPages || 1;
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -31,6 +55,17 @@ function LandingPage() {
 
   const handleJoinGD = () => {
     navigate({ to: "/upcoming-gds" });
+  };
+
+  const handleRegister = (joinCode: string) => {
+    if (accessToken) {
+      navigate({ to: "/sessions/join/$code", params: { code: joinCode } });
+    } else {
+      navigate({
+        to: "/auth/login",
+        search: { redirect: `/sessions/join/${joinCode}` },
+      });
+    }
   };
 
   return (
@@ -231,8 +266,157 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Meet Your Mentors ─── */}
-      <section id="mentors" className="py-20 bg-surface-dark/30 border-y border-white/5">
+      {/* ─── Upcoming Live GD Sessions (Swapped to be above Mentors) ─── */}
+      <section id="live-gds" className="py-20 bg-surface-dark/30 border-y border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-16">
+          <div className="space-y-4">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+              Upcoming Live GD Sessions
+            </h2>
+            <p className="text-text-muted-dark max-w-xl mx-auto">
+              Book a live seat in our upcoming sessions to practice under real testing environments.
+            </p>
+          </div>
+
+          {isUpcomingLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="bg-surface-dark/40 border border-white/5 rounded-2xl p-6 space-y-4 animate-pulse h-80 text-left">
+                  <div className="h-4 bg-white/10 rounded w-1/3" />
+                  <div className="h-6 bg-white/10 rounded w-3/4" />
+                  <div className="h-4 bg-white/10 rounded w-5/6" />
+                  <div className="h-10 bg-white/10 rounded-xl w-full mt-6" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {sessions.map((s) => (
+                  <div
+                    key={s._id}
+                    className="bg-surface-dark/40 border border-white/5 rounded-2xl p-6 flex flex-col justify-between hover:border-accent-teal/40 transition duration-300 shadow-xl relative"
+                  >
+                    <div className="space-y-4 text-left">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          s.status === "active"
+                            ? "bg-accent-teal/10 text-accent-teal"
+                            : s.status === "completed"
+                            ? "bg-white/10 text-text-muted-dark"
+                            : "bg-amber-500/10 text-amber-500"
+                        }`}>
+                          {s.status === "active" ? "LIVE NOW" : s.status === "completed" ? "Completed" : "Upcoming"}
+                        </span>
+                        <CornerPillBadge tone={s.requiresPayment ? "amber" : "teal"}>
+                          {s.requiresPayment && s.sessionFee ? `${s.sessionFee.currency} ${s.sessionFee.amount}` : "Free"}
+                        </CornerPillBadge>
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="font-display font-bold text-xl text-white line-clamp-1">
+                          {s.title}
+                        </h3>
+                        {s.topic && (
+                          <p className="text-xs text-accent-teal font-medium line-clamp-1">
+                            Topic: {s.topic}
+                          </p>
+                        )}
+                      </div>
+
+                      {s.description && (
+                        <p className="text-sm text-text-muted-dark line-clamp-2 leading-relaxed">
+                          {s.description}
+                        </p>
+                      )}
+
+                      <div className="text-xs text-text-muted-dark space-y-2 pt-2 border-t border-white/5">
+                        {s.scheduledAt && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-3.5 w-3.5 text-accent-teal" />
+                            <span>{new Date(s.scheduledAt).toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5 text-accent-teal" />
+                          <span>{s.durationMins || 30} Mins Duration</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <User className="h-3.5 w-3.5 text-accent-teal" />
+                          <span>Facilitator: {s.instructorId?.name || "Expert Mentor"}</span>
+                        </div>
+                        {s.tags && s.tags.length > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap pt-1">
+                            <Tag className="h-3 w-3 text-accent-teal shrink-0" />
+                            <div className="flex gap-1 flex-wrap">
+                              {s.tags.map((tag: string) => (
+                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/70">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-6 mt-6 border-t border-white/5">
+                      {s.status === "completed" ? (
+                        <Button
+                          disabled
+                          className="w-full bg-white/5 text-white/30 border border-white/5 cursor-not-allowed font-semibold py-5"
+                        >
+                          Completed
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => handleRegister(s.joinCode || "")}
+                          className="w-full bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold py-5 cursor-pointer"
+                        >
+                          Register to Join
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {!sessions.length && (
+                  <div className="col-span-full text-center py-16 bg-surface-dark/20 border border-white/5 border-dashed rounded-2xl">
+                    <p className="text-text-muted-dark">No live or upcoming GD sessions currently scheduled.</p>
+                  </div>
+                )}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={page === 1}
+                    className="border-white/10 hover:border-white/20 text-white bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                  </Button>
+                  <span className="text-sm font-medium text-text-muted-dark">
+                    Page <span className="text-white">{page}</span> of <span className="text-white">{totalPages}</span>
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={page === totalPages || !meta?.hasNext}
+                    className="border-white/10 hover:border-white/20 text-white bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 cursor-pointer"
+                  >
+                    Next <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ─── Meet Your Mentors (Swapped to be below live-gds) ─── */}
+      <section id="mentors" className="py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-16">
           <div className="space-y-4">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
@@ -298,94 +482,6 @@ function LandingPage() {
               <div className="flex gap-2">
                 <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Soft Skills</span>
                 <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Interview prep</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Live GD Sessions ─── */}
-      <section id="live-gds" className="py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-16">
-          <div className="space-y-4">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
-              Upcoming Live GD Sessions
-            </h2>
-            <p className="text-text-muted-dark max-w-xl mx-auto">
-              Book a live seat in our upcoming sessions to practice under real testing environments.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-surface-dark/40 border border-white/5 rounded-2xl p-6 space-y-4 text-left relative flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="px-2 py-1 rounded bg-accent-teal/10 text-accent-teal text-[10px] font-bold uppercase tracking-wider">
-                  Live Tomorrow
-                </span>
-                <h3 className="font-display font-bold text-lg text-white">Adoption of 4-day work week in India</h3>
-                <p className="text-sm text-text-muted-dark">
-                  Debate on corporate feasibility and work-life balance impact in the Indian context.
-                </p>
-                <div className="flex items-center gap-2 text-xs text-text-muted-dark mt-2">
-                  <Calendar className="h-4 w-4 text-accent-teal" /> <span>30 Mins Duration</span>
-                </div>
-              </div>
-              <div className="pt-6 border-t border-white/5 flex items-center justify-between gap-4 mt-4">
-                <div>
-                  <div className="text-[10px] text-text-muted-dark uppercase tracking-wider font-semibold">Session Fee</div>
-                  <div className="text-2xl font-bold text-white">INR 500</div>
-                </div>
-                <Button onClick={handleJoinGD} className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold">
-                  Register Now
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-surface-dark/40 border border-white/5 rounded-2xl p-6 space-y-4 text-left relative flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="px-2 py-1 rounded bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase tracking-wider">
-                  Scheduled
-                </span>
-                <h3 className="font-display font-bold text-lg text-white">Generative AI and White-Collar Jobs</h3>
-                <p className="text-sm text-text-muted-dark">
-                  Analyze if artificial intelligence acts as a tool or replacement for software & design professionals.
-                </p>
-                <div className="flex items-center gap-2 text-xs text-text-muted-dark mt-2">
-                  <Calendar className="h-4 w-4 text-accent-teal" /> <span>40 Mins Duration</span>
-                </div>
-              </div>
-              <div className="pt-6 border-t border-white/5 flex items-center justify-between gap-4 mt-4">
-                <div>
-                  <div className="text-[10px] text-text-muted-dark uppercase tracking-wider font-semibold">Session Fee</div>
-                  <div className="text-2xl font-bold text-white">Free</div>
-                </div>
-                <Button onClick={handleJoinGD} className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold">
-                  Join Free
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-surface-dark/40 border border-white/5 rounded-2xl p-6 space-y-4 text-left relative flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="px-2 py-1 rounded bg-accent-teal/10 text-accent-teal text-[10px] font-bold uppercase tracking-wider">
-                  Live in 3 Days
-                </span>
-                <h3 className="font-display font-bold text-lg text-white">Is remote work the future?</h3>
-                <p className="text-sm text-text-muted-dark">
-                  Discussing long-term infrastructure, productivity metrics, and team collaboration in hybrid setups.
-                </p>
-                <div className="flex items-center gap-2 text-xs text-text-muted-dark mt-2">
-                  <Calendar className="h-4 w-4 text-accent-teal" /> <span>30 Mins Duration</span>
-                </div>
-              </div>
-              <div className="pt-6 border-t border-white/5 flex items-center justify-between gap-4 mt-4">
-                <div>
-                  <div className="text-[10px] text-text-muted-dark uppercase tracking-wider font-semibold">Session Fee</div>
-                  <div className="text-2xl font-bold text-white">INR 300</div>
-                </div>
-                <Button onClick={handleJoinGD} className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold">
-                  Register Now
-                </Button>
               </div>
             </div>
           </div>
