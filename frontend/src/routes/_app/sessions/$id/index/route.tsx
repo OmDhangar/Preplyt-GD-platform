@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "@/lib/api";
 import type { Session, User, Attachment } from "@/lib/types";
 import { PageHeader } from "@/components/brand/PageHeader";
-import { LoadingPage } from "@/components/brand/LoadingState";
+import { LoadingPage, LoadingSection } from "@/components/brand/LoadingState";
 import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ const lifecycle = [
 
 function SessionDetail() {
   const { id } = Route.useParams();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const isStaff = role === "instructor" || role === "admin";
@@ -71,12 +71,27 @@ function SessionDetail() {
   const [newDurationInput, setNewDurationInput] = useState(45);
   const [loadingReschedule, setLoadingReschedule] = useState(false);
 
+  // Edit state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editTopic, setEditTopic] = useState("");
+  const [editCoInstructors, setEditCoInstructors] = useState<string[]>([]);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
+  const { data: instructors, isLoading: instructorsLoading } = useQuery({
+    queryKey: ["users", "instructors", "verified"],
+    queryFn: async () => {
+      const resp = await apiGet<{ users: User[] }>("/users?role=instructor&limit=1000");
+      return (resp.data.users || []).filter((u) => u.isVerified);
+    },
+  });
+
   // Add attachment state
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [attTitle, setAttTitle] = useState("");
   const [attDesc, setAttDesc] = useState("");
-  const [attUrl, setAttUrl] = useState("");
-  const [attType, setAttType] = useState("Link");
+  const [attFile, setAttFile] = useState<File | null>(null);
   const [loadingAttachment, setLoadingAttachment] = useState(false);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
 
@@ -164,30 +179,58 @@ function SessionDetail() {
       setLoadingReschedule(false);
     }
   };
+ 
+  const openEditModal = () => {
+    if (!session) return;
+    setEditTitle(session.title || "");
+    setEditDesc(session.description || "");
+    setEditTopic(session.topic || "");
+    setEditCoInstructors((session.coInstructors || []).map((c: any) => c._id || c));
+    setShowEditModal(true);
+  };
+
+  const handleEditSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoadingEdit(true);
+    try {
+      await apiPatch(`/sessions/${id}`, {
+        title: editTitle,
+        description: editDesc,
+        topic: editTopic,
+        coInstructors: editCoInstructors,
+      });
+      toast.success("Session updated successfully");
+      setShowEditModal(false);
+      reload();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Failed to update session");
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
 
   const handleAddAttachment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!attTitle || !attUrl) {
-      toast.error("Title and URL are required.");
+    if (!attTitle || !attFile) {
+      toast.error("Title and File are required.");
       return;
     }
     setLoadingAttachment(true);
     try {
-      await apiPost(`/sessions/${id}/attachments`, {
-        title: attTitle,
-        description: attDesc,
-        fileUrl: attUrl,
-        fileType: attType,
-      });
-      toast.success("Attachment added successfully");
+      const formData = new FormData();
+      formData.append("title", attTitle);
+      formData.append("description", attDesc);
+      formData.append("file", attFile);
+
+      await apiPost(`/sessions/${id}/attachments`, formData);
+      toast.success("Attachment uploaded successfully");
       setShowAttachmentModal(false);
       setAttTitle("");
       setAttDesc("");
-      setAttUrl("");
-      setAttType("Link");
+      setAttFile(null);
       refetchAttachments();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed to add attachment");
+      toast.error(e instanceof ApiError ? e.message : "Failed to upload attachment");
     } finally {
       setLoadingAttachment(false);
     }
@@ -323,6 +366,7 @@ function SessionDetail() {
               setNewDurationInput(session.durationMins || 45);
               setShowRescheduleModal(true);
             }}
+            onEditClick={openEditModal}
           />
           <JoinCodePanel session={session} />
           {session.googleMeetUrl && (
@@ -499,6 +543,112 @@ function SessionDetail() {
           </div>
         </div>
       )}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white border border-hairline-light rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-accent-teal to-accent-teal-bright" />
+            <div className="space-y-2">
+              <h3 className="font-display text-xl font-bold text-text-on-light">
+                Edit GD Session
+              </h3>
+              <p className="text-sm text-text-muted-light">
+                Update the session title, description, topic, and co-instructors.
+              </p>
+            </div>
+
+            <form onSubmit={handleEditSession} className="space-y-4">
+              <div>
+                <Label htmlFor="editTitle">Title</Label>
+                <Input
+                  id="editTitle"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="editDesc">Description</Label>
+                <Textarea
+                  id="editDesc"
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="editTopic">Topic</Label>
+                <Input
+                  id="editTopic"
+                  value={editTopic}
+                  onChange={(e) => setEditTopic(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label>Co-Instructors (Optional)</Label>
+                {instructorsLoading ? (
+                  <div className="mt-2">
+                    <LoadingSection rows={2} />
+                  </div>
+                ) : (
+                  <div className="mt-2 border border-input rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
+                    {(instructors || [])
+                      .filter((inst) => inst._id !== (session?.instructorId?._id || session?.instructorId || user?._id))
+                      .map((inst) => {
+                        const checked = editCoInstructors.includes(inst._id);
+                        return (
+                          <div key={inst._id} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id={`edit-co-${inst._id}`}
+                              checked={checked}
+                              onChange={(e) => {
+                                const nextCo = e.target.checked
+                                  ? [...editCoInstructors, inst._id]
+                                  : editCoInstructors.filter((id) => id !== inst._id);
+                                setEditCoInstructors(nextCo);
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-accent-teal focus:ring-accent-teal cursor-pointer accent-accent-teal"
+                            />
+                            <label htmlFor={`edit-co-${inst._id}`} className="text-sm text-text-on-light cursor-pointer select-none">
+                              {inst.name} ({inst.email})
+                            </label>
+                          </div>
+                        );
+                      })}
+                    {(instructors || []).filter((inst) => inst._id !== (session?.instructorId?._id || session?.instructorId || user?._id)).length === 0 && (
+                      <p className="text-xs text-text-muted-light">No other verified instructors available.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="submit"
+                  disabled={loadingEdit}
+                  className="flex-1 bg-accent-teal hover:bg-accent-teal-bright text-white"
+                >
+                  {loadingEdit ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={loadingEdit}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showAttachmentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -538,33 +688,15 @@ function SessionDetail() {
               </div>
 
               <div>
-                <Label htmlFor="attUrl">Resource URL / Link</Label>
+                <Label htmlFor="attFile">Upload File</Label>
                 <Input
-                  id="attUrl"
-                  placeholder="https://example.com/handout.pdf"
+                  id="attFile"
+                  type="file"
                   required
-                  value={attUrl}
-                  onChange={(e) => setAttUrl(e.target.value)}
-                  className="bg-white"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt"
+                  onChange={(e) => setAttFile(e.target.files?.[0] || null)}
+                  className="bg-white cursor-pointer"
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="attType">Type</Label>
-                <Select
-                  value={attType}
-                  onValueChange={(v) => setAttType(v)}
-                >
-                  <SelectTrigger id="attType" className="bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PDF">PDF Document</SelectItem>
-                    <SelectItem value="Link">Website Link</SelectItem>
-                    <SelectItem value="Image">Image File</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -940,10 +1072,12 @@ function SessionInfoPanel({
   session,
   isStaff,
   onRescheduleClick,
+  onEditClick,
 }: {
   session: Session;
   isStaff: boolean;
   onRescheduleClick: () => void;
+  onEditClick: () => void;
 }) {
   const now = new Date();
   const scheduledTime = session.scheduledAt ? new Date(session.scheduledAt) : null;
@@ -953,6 +1087,7 @@ function SessionInfoPanel({
       (session.status === "scheduled" &&
         scheduledTime &&
         scheduledTime.getTime() - now.getTime() > 30 * 60 * 1000));
+  const canEdit = isStaff && (session.status === "draft" || session.status === "scheduled");
 
   return (
     <section className="bg-white border rounded-2xl p-5 shadow-sm space-y-4 text-left">
@@ -960,16 +1095,28 @@ function SessionInfoPanel({
         <h2 className="font-display font-semibold text-text-on-light flex items-center gap-2">
           <Calendar className="h-4 w-4 text-accent-teal" /> Session Details
         </h2>
-        {canReschedule && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRescheduleClick}
-            className="text-xs text-accent-teal border-accent-teal hover:bg-accent-teal/5"
-          >
-            Reschedule
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEditClick}
+              className="text-xs text-accent-teal border-accent-teal hover:bg-accent-teal/5"
+            >
+              Edit
+            </Button>
+          )}
+          {canReschedule && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRescheduleClick}
+              className="text-xs text-accent-teal border-accent-teal hover:bg-accent-teal/5"
+            >
+              Reschedule
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm text-left">
@@ -993,6 +1140,18 @@ function SessionInfoPanel({
             <span className="font-medium text-text-on-light">
               {session.instructorId.name} ({session.instructorId.email})
             </span>
+          </div>
+        )}
+        {session.coInstructors && session.coInstructors.length > 0 && (
+          <div className="col-span-2 border-t border-hairline-light pt-3">
+            <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Co-Instructors</span>
+            <div className="flex flex-col gap-1 mt-1">
+              {session.coInstructors.map((co: any) => (
+                <span key={co._id} className="font-medium text-text-on-light text-sm">
+                  {co.name} ({co.email})
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -28,6 +28,11 @@ const createSessionRules = [
   body('instructorId')
     .optional()
     .isMongoId().withMessage('Invalid instructor ID'),
+  body('coInstructors')
+    .optional()
+    .isArray().withMessage('coInstructors must be an array of instructor IDs')
+    .custom((ids) => ids.every((id) => /^[a-fA-F0-9]{24}$/.test(id)))
+    .withMessage('All coInstructors must be valid MongoDB ObjectIds'),
 ];
 
 const updateSessionRules = [
@@ -46,6 +51,11 @@ const updateSessionRules = [
     .optional()
     .isIn(['draft', 'scheduled', 'active', 'completed', 'cancelled'])
     .withMessage('Invalid status'),
+  body('coInstructors')
+    .optional()
+    .isArray().withMessage('coInstructors must be an array of instructor IDs')
+    .custom((ids) => ids.every((id) => /^[a-fA-F0-9]{24}$/.test(id)))
+    .withMessage('All coInstructors must be valid MongoDB ObjectIds'),
 ];
 
 const sessionIdParam = [

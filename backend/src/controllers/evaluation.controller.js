@@ -159,12 +159,11 @@ exports.submitEvaluation = asyncHandler(async (req, res, next) => {
   await record.save();
 
   // Update session evaluated count
-  const submittedCount = await EvaluationRecord.countDocuments({
+  const uniqueEvaluated = await EvaluationRecord.distinct('studentId', {
     sessionId,
-    ...scopedInstructorFilter(session, req.user),
-    status:       { $in: [EVALUATION_STATUS.SUBMITTED, EVALUATION_STATUS.PUBLISHED] },
+    status: { $in: [EVALUATION_STATUS.SUBMITTED, EVALUATION_STATUS.PUBLISHED] },
   });
-  await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: submittedCount });
+  await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: uniqueEvaluated.length });
 
   auditService.fromReq(req, {
     action:     AUDIT_ACTIONS.EVAL_SUBMIT,
@@ -239,12 +238,11 @@ exports.publishEvaluations = asyncHandler(async (req, res, next) => {
   }
 
   // Update session evaluated count
-  const publishedCount = await EvaluationRecord.countDocuments({
+  const uniqueEvaluated = await EvaluationRecord.distinct('studentId', {
     sessionId,
-    ...scopedInstructorFilter(session, req.user),
-    status:       EVALUATION_STATUS.PUBLISHED,
+    status: { $in: [EVALUATION_STATUS.SUBMITTED, EVALUATION_STATUS.PUBLISHED] },
   });
-  await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: publishedCount });
+  await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: uniqueEvaluated.length });
 
   // Notify students and send emails (non-blocking)
   const studentIdsPublished = records.map((r) => r.studentId);

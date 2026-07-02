@@ -2,6 +2,7 @@ const Payment            = require('../models/Payment');
 const GdSession          = require('../models/GdSession');
 const SessionParticipant = require('../models/SessionParticipant');
 const Notification       = require('../models/Notification');
+const User               = require('../models/User');
 const asyncHandler       = require('../utils/asyncHandler');
 const AppError           = require('../utils/AppError');
 const { success, created } = require('../utils/apiResponse');
@@ -225,6 +226,15 @@ exports.handleWebhook = asyncHandler(async (req, res) => {
         await GdSession.findByIdAndUpdate(payment.sessionId, {
           $addToSet: { students: payment.userId }
         });
+
+        // Send confirmation & subscription emails (non-blocking)
+        const user = await User.findById(payment.userId);
+        const session = await GdSession.findById(payment.sessionId)
+          .populate('instructorId', 'name email');
+        if (user && session) {
+          emailService.sendPaymentConfirmation(user, payment, session).catch(() => {});
+          emailService.sendGdSubscription(user, session, session.instructorId).catch(() => {});
+        }
       }
       break;
 

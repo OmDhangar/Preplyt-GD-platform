@@ -1,5 +1,7 @@
 const GdSession = require('../models/GdSession');
 const SessionParticipant = require('../models/SessionParticipant');
+const fs = require('fs');
+const path = require('path');
 const EvaluationRecord = require('../models/EvaluationRecord');
 const EvaluationTemplate = require('../models/EvaluationTemplate');
 const InstructorProfile = require('../models/InstructorProfile');
@@ -516,17 +518,27 @@ exports.addAttachment = asyncHandler(async (req, res, next) => {
   if (!session) return next(new AppError('Session not found.', 404));
   assertInstructorAccess(session, req.user);
 
-  const { title, description, fileUrl, fileType, fileSize } = req.body;
-  if (!title || !fileUrl) {
-    return next(new AppError('Attachment title and fileUrl are required.', 400));
+  if (!req.file) {
+    return next(new AppError('No file uploaded.', 400));
   }
+
+  const { title, description } = req.body;
+  if (!title) {
+    // Delete file if title validation failed
+    fs.unlink(req.file.path, () => {});
+    return next(new AppError('Attachment title is required.', 400));
+  }
+
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  const fileType = req.file.mimetype;
+  const fileSize = req.file.size;
 
   const attachment = {
     title,
     description: description || '',
     fileUrl,
-    fileType: fileType || '',
-    fileSize: fileSize || 0,
+    fileType,
+    fileSize,
     uploadedBy: req.user._id,
     uploadedAt: new Date(),
   };
@@ -553,6 +565,15 @@ exports.removeAttachment = asyncHandler(async (req, res, next) => {
   const attachment = session.attachments.id(req.params.attachmentId);
   if (!attachment) {
     return next(new AppError('Attachment not found.', 404));
+  }
+
+  // Attempt to delete local file from disk if it was stored locally
+  if (attachment.fileUrl.includes('/uploads/')) {
+    const filename = attachment.fileUrl.split('/uploads/')[1];
+    const filePath = path.join(__dirname, '../../uploads', filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
   }
 
   attachment.deleteOne();

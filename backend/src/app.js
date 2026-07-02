@@ -107,6 +107,10 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ── Serve uploads folder statically ───────────────────────────────────────────
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // ── API routes ─────────────────────────────────────────────────────────────────
 app.use('/api', routes);
 

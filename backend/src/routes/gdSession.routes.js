@@ -4,6 +4,7 @@ const { protect }           = require('../middleware/auth');
 const { restrictTo }        = require('../middleware/roles');
 const { requireVerified }   = require('../middleware/instructorVerified');
 const validate              = require('../middleware/validate');
+const upload                = require('../middleware/upload');
 const {
   createSessionRules, updateSessionRules,
   sessionIdParam, assignStudentsRules, rescheduleSessionRules,
@@ -119,6 +120,7 @@ router.post('/:sessionId/join',
 router.post('/:sessionId/attachments',
   restrictTo('instructor', 'admin'),
   requireVerified,
+  upload.single('file'),
   sessionIdParam, validate,
   ctrl.addAttachment
 );

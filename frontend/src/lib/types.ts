@@ -105,6 +105,7 @@ export interface Session {
   topic?: string;
   durationMins?: number;
   instructorId?: any;
+  coInstructors?: User[];
   tags?: string[];
   createdBy?: string | User;
   attachments?: Attachment[];

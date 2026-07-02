@@ -36,7 +36,6 @@ function NewSession() {
   });
 
   const { data: instructors, isLoading: instructorsLoading } = useQuery({
-    enabled: role === "admin",
     queryKey: ["users", "instructors", "verified"],
     queryFn: async () => {
       const resp = await apiGet<{ users: User[] }>("/users?role=instructor&limit=1000");
@@ -44,7 +43,19 @@ function NewSession() {
     },
   });
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    templateId: string;
+    scheduledAt: string;
+    requiresPayment: boolean;
+    price: number;
+    currency: string;
+    googleMeetUrl: string;
+    autoCreateMeet: boolean;
+    instructorId: string;
+    coInstructors: string[];
+  }>({
     title: "",
     description: "",
     templateId: "",
@@ -55,6 +66,7 @@ function NewSession() {
     googleMeetUrl: "",
     autoCreateMeet: true,
     instructorId: "",
+    coInstructors: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -118,7 +130,7 @@ function NewSession() {
             ) : (
             <Select
               value={form.instructorId}
-              onValueChange={(v) => setForm({ ...form, instructorId: v })}
+              onValueChange={(v) => setForm({ ...form, instructorId: v, coInstructors: form.coInstructors.filter((id) => id !== v) })}
             >
               <SelectTrigger id="instructorId">
                 <SelectValue placeholder="Select verified instructor" />
@@ -160,6 +172,44 @@ function NewSession() {
               ))}
             </SelectContent>
           </Select>
+          )}
+        </div>
+        <div>
+          <Label>Co-Instructors (Optional)</Label>
+          {instructorsLoading ? (
+            <div className="mt-2">
+              <LoadingSection rows={2} />
+            </div>
+          ) : (
+            <div className="mt-2 border border-input rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
+              {(instructors || [])
+                .filter((inst) => inst._id !== (form.instructorId || user?._id))
+                .map((inst) => {
+                  const checked = form.coInstructors.includes(inst._id);
+                  return (
+                    <div key={inst._id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={`co-${inst._id}`}
+                        checked={checked}
+                        onChange={(e) => {
+                          const nextCo = e.target.checked
+                            ? [...form.coInstructors, inst._id]
+                            : form.coInstructors.filter((id) => id !== inst._id);
+                          setForm({ ...form, coInstructors: nextCo });
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-accent-teal focus:ring-accent-teal cursor-pointer accent-accent-teal"
+                      />
+                      <label htmlFor={`co-${inst._id}`} className="text-sm text-text-on-light cursor-pointer select-none">
+                        {inst.name} ({inst.email})
+                      </label>
+                    </div>
+                  );
+                })}
+              {(instructors || []).filter((inst) => inst._id !== (form.instructorId || user?._id)).length === 0 && (
+                <p className="text-xs text-text-muted-light">No other verified instructors available.</p>
+              )}
+            </div>
           )}
         </div>
         <div>

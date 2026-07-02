@@ -116,8 +116,12 @@ api.interceptors.response.use(
 function toApiError(error: AxiosError<ApiEnvelope<unknown>>): ApiError {
   const status = error.response?.status ?? 0;
   const body = error.response?.data;
-  const msg =
+  let msg =
     body?.message ?? error.message ?? "Request failed. Please try again.";
+  if (body?.details && Array.isArray(body.details) && body.details.length > 0) {
+    const detailsMsg = body.details.map((d: any) => d.message).join(", ");
+    msg = `${msg}: ${detailsMsg}`;
+  }
   return new ApiError(msg, status, body?.details);
 }
 
