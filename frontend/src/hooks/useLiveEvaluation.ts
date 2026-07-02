@@ -7,6 +7,7 @@ import type {
   FieldValueEntry,
 } from "@/lib/types";
 import { calculateEvaluationScore, fieldValuesArrayToMap } from "@/lib/rubric";
+import { userId } from "@/lib/evaluation-utils";
 import type { PresenceUser } from "@/components/brand/PresenceStrip";
 import type { SaveStatus } from "@/components/brand/SaveStatusIndicator";
 
@@ -42,7 +43,7 @@ export function useLiveEvaluation(sessionId: string, fields: TemplateField[]) {
         if (cancelled) return;
         const map: Record<string, Record<string, unknown>> = {};
         (data.evaluations || []).forEach((ev) => {
-          map[ev.studentId] = {
+          map[userId(ev.studentId)] = {
             ...fieldValuesArrayToMap(ev.fieldValues),
             overallComment: ev.overallComment || "",
           };

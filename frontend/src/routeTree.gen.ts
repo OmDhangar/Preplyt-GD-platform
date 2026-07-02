@@ -37,6 +37,8 @@ import { Route as AppSessionsJoinCodeRouteRouteImport } from './routes/_app/sess
 import { Route as AppSessionsIdResultsRouteRouteImport } from './routes/_app/sessions/$id/results/route'
 import { Route as AppSessionsIdEvaluateRouteRouteImport } from './routes/_app/sessions/$id/evaluate/route'
 import { Route as AppSessionsIdIndexRouteRouteImport } from './routes/_app/sessions/$id/index/route'
+import { Route as AppSessionsIdEvaluationsReviewRouteRouteImport } from './routes/_app/sessions/$id/evaluations/review/route'
+import { Route as AppSessionsIdEvaluationsIndexRouteRouteImport } from './routes/_app/sessions/$id/evaluations/index/route'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -185,6 +187,18 @@ const AppSessionsIdIndexRouteRoute = AppSessionsIdIndexRouteRouteImport.update({
   path: '',
   getParentRoute: () => AppSessionsIdRouteRoute,
 } as any)
+const AppSessionsIdEvaluationsReviewRouteRoute =
+  AppSessionsIdEvaluationsReviewRouteRouteImport.update({
+    id: '/evaluations/review',
+    path: '/evaluations/review',
+    getParentRoute: () => AppSessionsIdRouteRoute,
+  } as any)
+const AppSessionsIdEvaluationsIndexRouteRoute =
+  AppSessionsIdEvaluationsIndexRouteRouteImport.update({
+    id: '/evaluations/',
+    path: '/evaluations',
+    getParentRoute: () => AppSessionsIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -214,6 +228,8 @@ export interface FileRoutesByFullPath {
   '/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRouteRoute
   '/sessions/$id/results': typeof AppSessionsIdResultsRouteRoute
   '/sessions/join/$code': typeof AppSessionsJoinCodeRouteRoute
+  '/sessions/$id/evaluations/': typeof AppSessionsIdEvaluationsIndexRouteRoute
+  '/sessions/$id/evaluations/review': typeof AppSessionsIdEvaluationsReviewRouteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -242,6 +258,8 @@ export interface FileRoutesByTo {
   '/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRouteRoute
   '/sessions/$id/results': typeof AppSessionsIdResultsRouteRoute
   '/sessions/join/$code': typeof AppSessionsJoinCodeRouteRoute
+  '/sessions/$id/evaluations': typeof AppSessionsIdEvaluationsIndexRouteRoute
+  '/sessions/$id/evaluations/review': typeof AppSessionsIdEvaluationsReviewRouteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -273,6 +291,8 @@ export interface FileRoutesById {
   '/_app/sessions/$id/evaluate': typeof AppSessionsIdEvaluateRouteRoute
   '/_app/sessions/$id/results': typeof AppSessionsIdResultsRouteRoute
   '/_app/sessions/join/$code': typeof AppSessionsJoinCodeRouteRoute
+  '/_app/sessions/$id/evaluations/': typeof AppSessionsIdEvaluationsIndexRouteRoute
+  '/_app/sessions/$id/evaluations/review': typeof AppSessionsIdEvaluationsReviewRouteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -304,6 +324,8 @@ export interface FileRouteTypes {
     | '/sessions/$id/evaluate'
     | '/sessions/$id/results'
     | '/sessions/join/$code'
+    | '/sessions/$id/evaluations/'
+    | '/sessions/$id/evaluations/review'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -332,6 +354,8 @@ export interface FileRouteTypes {
     | '/sessions/$id/evaluate'
     | '/sessions/$id/results'
     | '/sessions/join/$code'
+    | '/sessions/$id/evaluations'
+    | '/sessions/$id/evaluations/review'
   id:
     | '__root__'
     | '/'
@@ -362,6 +386,8 @@ export interface FileRouteTypes {
     | '/_app/sessions/$id/evaluate'
     | '/_app/sessions/$id/results'
     | '/_app/sessions/join/$code'
+    | '/_app/sessions/$id/evaluations/'
+    | '/_app/sessions/$id/evaluations/review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -576,6 +602,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSessionsIdIndexRouteRouteImport
       parentRoute: typeof AppSessionsIdRouteRoute
     }
+    '/_app/sessions/$id/evaluations/review': {
+      id: '/_app/sessions/$id/evaluations/review'
+      path: '/evaluations/review'
+      fullPath: '/sessions/$id/evaluations/review'
+      preLoaderRoute: typeof AppSessionsIdEvaluationsReviewRouteRouteImport
+      parentRoute: typeof AppSessionsIdRouteRoute
+    }
+    '/_app/sessions/$id/evaluations/': {
+      id: '/_app/sessions/$id/evaluations/'
+      path: '/evaluations'
+      fullPath: '/sessions/$id/evaluations/'
+      preLoaderRoute: typeof AppSessionsIdEvaluationsIndexRouteRouteImport
+      parentRoute: typeof AppSessionsIdRouteRoute
+    }
   }
 }
 
@@ -583,12 +623,18 @@ interface AppSessionsIdRouteRouteChildren {
   AppSessionsIdIndexRouteRoute: typeof AppSessionsIdIndexRouteRoute
   AppSessionsIdEvaluateRouteRoute: typeof AppSessionsIdEvaluateRouteRoute
   AppSessionsIdResultsRouteRoute: typeof AppSessionsIdResultsRouteRoute
+  AppSessionsIdEvaluationsIndexRouteRoute: typeof AppSessionsIdEvaluationsIndexRouteRoute
+  AppSessionsIdEvaluationsReviewRouteRoute: typeof AppSessionsIdEvaluationsReviewRouteRoute
 }
 
 const AppSessionsIdRouteRouteChildren: AppSessionsIdRouteRouteChildren = {
   AppSessionsIdIndexRouteRoute: AppSessionsIdIndexRouteRoute,
   AppSessionsIdEvaluateRouteRoute: AppSessionsIdEvaluateRouteRoute,
   AppSessionsIdResultsRouteRoute: AppSessionsIdResultsRouteRoute,
+  AppSessionsIdEvaluationsIndexRouteRoute:
+    AppSessionsIdEvaluationsIndexRouteRoute,
+  AppSessionsIdEvaluationsReviewRouteRoute:
+    AppSessionsIdEvaluationsReviewRouteRoute,
 }
 
 const AppSessionsIdRouteRouteWithChildren =

@@ -123,13 +123,20 @@ export interface FieldValueEntry {
 export interface Evaluation {
   _id?: string;
   sessionId: string;
-  studentId: string;
+  studentId: string | User;
+  instructorId?: string | User;
+  templateId?: string | Template;
+  templateVersion?: number;
   fieldValues: FieldValueEntry[];
   totalScore?: number;
   maxScore?: number;
   percentScore?: number;
   status?: "draft" | "submitted" | "published";
   overallComment?: string;
+  submittedAt?: string;
+  publishedAt?: string;
+  version?: number;
+  createdAt?: string;
   updatedAt?: string;
 }
 

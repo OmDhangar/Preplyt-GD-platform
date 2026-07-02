@@ -1,9 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { apiGet, apiPatch, ApiError } from "@/lib/api";
 import type { Session, Template, Participant, TemplateField, FieldType } from "@/lib/types";
 import { PageHeader } from "@/components/brand/PageHeader";
+import { LoadingPage } from "@/components/brand/LoadingState";
 import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
 import { SaveStatusIndicator } from "@/components/brand/SaveStatusIndicator";
 import { PresenceStrip } from "@/components/brand/PresenceStrip";
@@ -82,7 +83,6 @@ export const Route = createFileRoute("/_app/sessions/$id/evaluate")({
 function EvaluatePage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
-  const navigate = useNavigate();
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", id],
@@ -139,6 +139,8 @@ function EvaluatePage() {
   const [customParamMax, setCustomParamMax] = useState(10);
   const [customParamWeight, setCustomParamWeight] = useState(1);
   const [addingParam, setAddingParam] = useState(false);
+  const [savingNow, setSavingNow] = useState(false);
+  const [submittingStudentId, setSubmittingStudentId] = useState<string | null>(null);
 
   const addCustomParam = async () => {
     if (!customParamLabel.trim()) {
@@ -202,7 +204,7 @@ function EvaluatePage() {
   }
 
   if (!session || !template) {
-    return <div className="text-text-muted-light">Loading evaluation…</div>;
+    return <LoadingPage title="Loading evaluation" subtitle="Preparing candidates and rubric fields" />;
   }
 
   const activeValues = activeStudentId && activeStudentId !== "summary" ? live.values[activeStudentId] || {} : {};
@@ -212,11 +214,14 @@ function EvaluatePage() {
 
   const submitOne = async () => {
     if (!activeStudentId) return;
+    setSubmittingStudentId(activeStudentId);
     try {
       await live.submitOne(activeStudentId);
       toast.success("Evaluation submitted");
     } catch {
       toast.error("Submit failed");
+    } finally {
+      setSubmittingStudentId(null);
     }
   };
 
@@ -234,13 +239,18 @@ function EvaluatePage() {
             <Button variant="outline" onClick={() => setShowCustomParamModal(true)} className="border-accent-teal text-accent-teal hover:bg-surface-light text-xs sm:text-sm py-1 px-3 sm:py-2 sm:px-4">
               + Custom Parameter
             </Button>
-            <Button variant="outline" onClick={async () => {
-              const result = await live.flushNow();
-              if (result === "saved") toast.success("All changes saved");
-              else if (result === "empty") toast.info("No unsaved changes");
-              else toast.error("Save failed — will retry");
+            <Button variant="outline" disabled={savingNow} onClick={async () => {
+              setSavingNow(true);
+              try {
+                const result = await live.flushNow();
+                if (result === "saved") toast.success("All changes saved");
+                else if (result === "empty") toast.info("No unsaved changes");
+                else toast.error("Save failed — will retry");
+              } finally {
+                setSavingNow(false);
+              }
             }} className="text-xs sm:text-sm py-1 px-3 sm:py-2 sm:px-4">
-              Save now
+              {savingNow ? "Saving..." : "Save now"}
             </Button>
           </div>
         }
@@ -475,23 +485,10 @@ function EvaluatePage() {
                     Publishing will finalize all drafts, calculate scores, and notify all students via email and notifications. This action is irreversible.
                   </p>
                 </div>
-                <Button
-                  onClick={async () => {
-                    const confirmPublish = confirm("Are you sure you want to publish all results? This will notify all evaluated students.");
-                    if (!confirmPublish) return;
-
-                    try {
-                      await live.publishAll();
-                      toast.success("All evaluation results published successfully!");
-                      qc.invalidateQueries({ queryKey: ["session", id] });
-                      navigate({ to: "/sessions/$id", params: { id } });
-                    } catch (e) {
-                      toast.error("Failed to publish results");
-                    }
-                  }}
-                  className="w-full sm:w-auto bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold px-6 cursor-pointer"
-                >
-                  Publish All Results
+                <Button asChild className="w-full sm:w-auto bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-semibold px-6 cursor-pointer">
+                  <Link to="/sessions/$id/evaluations/review" params={{ id }}>
+                    Review and publish
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -545,8 +542,9 @@ function EvaluatePage() {
 
               <div className="mt-6 flex justify-end">
                 <Button onClick={submitOne}
+                  disabled={submittingStudentId === activeStudentId}
                   className="bg-accent-teal hover:bg-accent-teal-bright">
-                  Submit evaluation
+                  {submittingStudentId === activeStudentId ? "Submitting..." : "Submit evaluation"}
                 </Button>
               </div>
             </>

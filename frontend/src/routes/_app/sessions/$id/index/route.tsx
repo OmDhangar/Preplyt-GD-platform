@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "@/lib/api";
 import type { Session, User, Attachment } from "@/lib/types";
 import { PageHeader } from "@/components/brand/PageHeader";
+import { LoadingPage } from "@/components/brand/LoadingState";
 import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,9 @@ function SessionDetail() {
   const isStaff = role === "instructor" || role === "admin";
   const [showStartModal, setShowStartModal] = useState(false);
   const [loadingStart, setLoadingStart] = useState(false);
+  const [loadingMeet, setLoadingMeet] = useState(false);
+  const [loadingEnd, setLoadingEnd] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const [meetUrlInput, setMeetUrlInput] = useState("");
 
   // Reschedule state
@@ -74,6 +78,7 @@ function SessionDetail() {
   const [attUrl, setAttUrl] = useState("");
   const [attType, setAttType] = useState("Link");
   const [loadingAttachment, setLoadingAttachment] = useState(false);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", id],
@@ -107,6 +112,7 @@ function SessionDetail() {
     }
   };
   const generateMeetLink = async () => {
+    setLoadingMeet(true);
     try {
       const resp = await apiPost<{ session: Session }>(`/sessions/${id}/google-meet`);
       const newUrl = resp.session?.googleMeetUrl || "";
@@ -115,25 +121,26 @@ function SessionDetail() {
       reload();
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Failed to generate Google Meet URL.");
+    } finally {
+      setLoadingMeet(false);
     }
   };
   const end = async () => {
+    setLoadingEnd(true);
     try { await apiPost(`/sessions/${id}/end`); toast.success("Session ended"); reload(); }
     catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
+    finally { setLoadingEnd(false); }
   };
   const remove = async () => {
     if (!confirm("Delete this session?")) return;
-    try { await apiDelete(`/sessions/${id}`); toast.success("Deleted"); window.history.back(); }
-    catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
-  };
-  const publish = async () => {
+    setLoadingDelete(true);
     try {
-      await apiPost(`/evaluations/sessions/${id}/evaluations/publish`);
-      toast.success("Results published");
-      reload();
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Failed");
+      await apiDelete(`/sessions/${id}`);
+      toast.success("Deleted");
+      navigate({ to: "/sessions" });
     }
+    catch (e) { toast.error(e instanceof ApiError ? e.message : "Failed"); }
+    finally { setLoadingDelete(false); }
   };
 
   const handleReschedule = async (e: React.FormEvent) => {
@@ -188,16 +195,19 @@ function SessionDetail() {
 
   const handleDeleteAttachment = async (attachmentId: string) => {
     if (!confirm("Are you sure you want to delete this attachment?")) return;
+    setDeletingAttachmentId(attachmentId);
     try {
       await apiDelete(`/sessions/${id}/attachments/${attachmentId}`);
       toast.success("Attachment deleted");
       refetchAttachments();
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Failed to delete attachment");
+    } finally {
+      setDeletingAttachmentId(null);
     }
   };
 
-  if (!session) return <div className="text-text-muted-light">Loading…</div>;
+  if (!session) return <LoadingPage title="Loading session" subtitle="Fetching session details and participants" />;
 
   const currentStep = lifecycle.findIndex((l) => l.key === session.status);
 
@@ -229,20 +239,29 @@ function SessionDetail() {
                       Evaluate
                     </Link>
                   </Button>
-                  <Button variant="outline" onClick={end}>
-                    <Square className="h-4 w-4 mr-1" /> End
+                  <Button variant="outline" onClick={end} disabled={loadingEnd}>
+                    <Square className="h-4 w-4 mr-1" /> {loadingEnd ? "Ending..." : "End"}
                   </Button>
                 </>
               )}
               {session.status === "completed" && (
-                <Button onClick={publish} className="bg-accent-teal hover:bg-accent-teal-bright">
-                  Publish results
-                </Button>
+                <>
+                  <Button asChild variant="outline">
+                    <Link to="/sessions/$id/evaluations" params={{ id }}>
+                      View evaluations
+                    </Link>
+                  </Button>
+                  <Button asChild className="bg-accent-teal hover:bg-accent-teal-bright">
+                    <Link to="/sessions/$id/evaluations/review" params={{ id }}>
+                      Review publish
+                    </Link>
+                  </Button>
+                </>
               )}
               {session.status === "draft" && (
-                <Button variant="ghost" onClick={remove}
+                <Button variant="ghost" onClick={remove} disabled={loadingDelete}
                   className="text-accent-red hover:text-accent-red">
-                  <Trash2 className="h-4 w-4" />
+                  {loadingDelete ? "Deleting..." : <Trash2 className="h-4 w-4" />}
                 </Button>
               )}
             </div>
@@ -315,9 +334,10 @@ function SessionDetail() {
             isStaff={isStaff}
             onAddClick={() => setShowAttachmentModal(true)}
             onDeleteClick={handleDeleteAttachment}
+            deletingAttachmentId={deletingAttachmentId}
           />
         </div>
-        <ParticipantsPanel sessionId={id} canManage={isStaff} />
+        <ParticipantsPanel sessionId={id} canManage={isStaff} sessionTitle={session?.title} />
       </div>
 
       {showStartModal && (
@@ -380,9 +400,10 @@ function SessionDetail() {
                 type="button"
                 variant="outline"
                 onClick={generateMeetLink}
+                disabled={loadingMeet}
                 className="w-full text-xs border-accent-teal text-accent-teal hover:bg-accent-teal/5 flex items-center justify-center gap-1.5"
               >
-                <RefreshCw className="h-3.5 w-3.5" /> Generate Google Meet URL
+                <RefreshCw className="h-3.5 w-3.5" /> {loadingMeet ? "Generating..." : "Generate Google Meet URL"}
               </Button>
             </div>
 
@@ -748,7 +769,15 @@ function JoinCodePanel({ session }: { session: Session }) {
   );
 }
 
-function ParticipantsPanel({ sessionId, canManage }: { sessionId: string; canManage: boolean }) {
+function ParticipantsPanel({
+  sessionId,
+  canManage,
+  sessionTitle,
+}: {
+  sessionId: string;
+  canManage: boolean;
+  sessionTitle?: string;
+}) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["session", sessionId, "participants"],
@@ -761,11 +790,71 @@ function ParticipantsPanel({ sessionId, canManage }: { sessionId: string; canMan
         name: p.studentId?.name || "Unknown",
         email: p.studentId?.email || "",
         paymentStatus: p.isPaid ? "paid" : "pending",
+        status: p.status,
+        invitedAt: p.invitedAt,
+        registeredAt: p.registeredAt,
+        attendedAt: p.attendedAt,
       }));
     },
   });
+
+  const handleExportCSV = () => {
+    if (!data || data.length === 0) {
+      toast.error("No participants to export");
+      return;
+    }
+
+    const headers = [
+      "Student Name",
+      "Student Email",
+      "Participation Status",
+      "Payment Status",
+      "Invited At",
+      "Registered At",
+      "Attended At",
+    ];
+
+    const rows = data.map((p) => [
+      p.name || "",
+      p.email || "",
+      p.status || "",
+      p.paymentStatus || "",
+      p.invitedAt ? new Date(p.invitedAt).toLocaleString() : "",
+      p.registeredAt ? new Date(p.registeredAt).toLocaleString() : "",
+      p.attendedAt ? new Date(p.attendedAt).toLocaleString() : "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map((val) => {
+            const escaped = String(val).replace(/"/g, '""');
+            return `"${escaped}"`;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+
+    const sanitizedTitle = (sessionTitle || "session")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/(^_+|_+$)/g, "");
+    link.setAttribute("download", `${sanitizedTitle}_participants.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Excel/CSV export completed!");
+  };
   const [email, setEmail] = useState("");
   const [results, setResults] = useState<User[]>([]);
+  const [addingUserId, setAddingUserId] = useState<string | null>(null);
   const search = async (q: string) => {
     setEmail(q);
     if (q.length < 2) { setResults([]); return; }
@@ -775,6 +864,7 @@ function ParticipantsPanel({ sessionId, canManage }: { sessionId: string; canMan
     } catch { setResults([]); }
   };
   const add = async (userId: string) => {
+    setAddingUserId(userId);
     try {
       await apiPost(`/sessions/${sessionId}/participants`, { userId });
       toast.success("Added");
@@ -782,14 +872,28 @@ function ParticipantsPanel({ sessionId, canManage }: { sessionId: string; canMan
       qc.invalidateQueries({ queryKey: ["session", sessionId, "participants"] });
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Failed");
+    } finally {
+      setAddingUserId(null);
     }
   };
 
   return (
     <section className="bg-white border rounded-2xl p-5">
-      <h2 className="font-display font-semibold mb-3 flex items-center gap-2">
-        <UsersIcon className="h-4 w-4" /> Participants
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display font-semibold flex items-center gap-2">
+          <UsersIcon className="h-4 w-4" /> Participants
+        </h2>
+        {canManage && data && data.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="text-xs border-accent-teal text-accent-teal hover:bg-accent-teal/5 flex items-center gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" /> Export Excel
+          </Button>
+        )}
+      </div>
       <ul className="divide-y mb-4">
         {(data || []).map((p) => (
           <li key={p.userId} className="py-2 flex items-center justify-between text-sm">
@@ -816,9 +920,12 @@ function ParticipantsPanel({ sessionId, canManage }: { sessionId: string; canMan
             <div className="absolute z-10 bg-white border rounded-lg w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
               {results.map((u) => (
                 <button key={u._id} onClick={() => add(u._id)}
+                  disabled={addingUserId === u._id}
                   className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-light">
                   <div className="font-medium">{u.name}</div>
-                  <div className="text-xs text-text-muted-light">{u.email}</div>
+                  <div className="text-xs text-text-muted-light">
+                    {addingUserId === u._id ? "Adding..." : u.email}
+                  </div>
                 </button>
               ))}
             </div>
@@ -899,12 +1006,14 @@ function AttachmentsPanel({
   isStaff,
   onAddClick,
   onDeleteClick,
+  deletingAttachmentId,
 }: {
   attachments: Attachment[];
   error: any;
   isStaff: boolean;
   onAddClick: () => void;
   onDeleteClick: (id: string) => void;
+  deletingAttachmentId?: string | null;
 }) {
   const isLocked = error instanceof ApiError && error.status === 403;
 
@@ -988,9 +1097,14 @@ function AttachmentsPanel({
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteClick(att._id)}
+                    disabled={deletingAttachmentId === att._id}
                     className="h-8 w-8 p-0 text-text-muted-light hover:text-accent-red"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {deletingAttachmentId === att._id ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 )}
               </div>

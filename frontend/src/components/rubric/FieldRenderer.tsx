@@ -161,11 +161,6 @@ export function FieldRenderer({ field, value, onChange, readOnly }: Props) {
           {field.label}
           {field.required && <span className="text-accent-red ml-0.5">*</span>}
         </Label>
-        {field.visibleToStudent === false && (
-          <span className="text-[10px] uppercase tracking-wider text-text-muted-light">
-            Internal
-          </span>
-        )}
       </div>
       {field.description && (
         <p className="text-xs text-text-muted-light">{field.description}</p>

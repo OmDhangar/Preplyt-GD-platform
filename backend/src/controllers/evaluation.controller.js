@@ -23,6 +23,14 @@ const assertInstructorAccess = (session, user) => {
   if (!owns && !co) throw new AppError('You do not have access to this session.', 403);
 };
 
+const scopedInstructorFilter = (session, user) => (
+  user.role === ROLES.ADMIN ? {} : { instructorId: user._id }
+);
+
+const evaluationOwnerId = (session, user) => (
+  user.role === ROLES.ADMIN ? session.instructorId : user._id
+);
+
 // ── GET /api/sessions/:sessionId/evaluations ──────────────────────────────────
 // Returns ALL evaluation records for this session × instructor (preload pattern)
 exports.getSessionEvaluations = asyncHandler(async (req, res, next) => {
@@ -31,7 +39,7 @@ exports.getSessionEvaluations = asyncHandler(async (req, res, next) => {
   assertInstructorAccess(session, req.user);
 
   const records = await EvaluationRecord
-    .find({ sessionId: session._id, instructorId: req.user._id })
+    .find({ sessionId: session._id, ...scopedInstructorFilter(session, req.user) })
     .populate('studentId', 'name email avatar')
     .lean();
 
@@ -75,10 +83,11 @@ exports.batchUpdateEvaluations = asyncHandler(async (req, res, next) => {
   await Promise.all(
     updates.map(async ({ studentId, fieldValues = [], overallComment }) => {
       try {
+        const ownerId = evaluationOwnerId(session, req.user);
         let record = await EvaluationRecord.findOne({
           sessionId,
           studentId,
-          instructorId: req.user._id,
+          instructorId: ownerId,
         });
 
         if (!record) {
@@ -86,7 +95,7 @@ exports.batchUpdateEvaluations = asyncHandler(async (req, res, next) => {
           record = new EvaluationRecord({
             sessionId,
             studentId,
-            instructorId:    req.user._id,
+            instructorId:    ownerId,
             templateId:      session.templateId,
             templateVersion: session.templateVersion,
             status:          EVALUATION_STATUS.DRAFT,
@@ -135,7 +144,7 @@ exports.submitEvaluation = asyncHandler(async (req, res, next) => {
   const record = await EvaluationRecord.findOne({
     sessionId,
     studentId,
-    instructorId: req.user._id,
+    ...scopedInstructorFilter(session, req.user),
   });
   if (!record) return next(new AppError('Evaluation record not found.', 404));
   if (record.status === EVALUATION_STATUS.PUBLISHED) {
@@ -152,7 +161,7 @@ exports.submitEvaluation = asyncHandler(async (req, res, next) => {
   // Update session evaluated count
   const submittedCount = await EvaluationRecord.countDocuments({
     sessionId,
-    instructorId: req.user._id,
+    ...scopedInstructorFilter(session, req.user),
     status:       { $in: [EVALUATION_STATUS.SUBMITTED, EVALUATION_STATUS.PUBLISHED] },
   });
   await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: submittedCount });
@@ -186,16 +195,17 @@ exports.publishEvaluations = asyncHandler(async (req, res, next) => {
   if (!template) return next(new AppError('Evaluation template not found.', 404));
 
   for (const studentId of participantStudentIds) {
+    const ownerId = evaluationOwnerId(session, req.user);
     let record = await EvaluationRecord.findOne({
       sessionId,
       studentId,
-      instructorId: req.user._id,
+      instructorId: ownerId,
     });
     if (!record) {
       record = new EvaluationRecord({
         sessionId,
         studentId,
-        instructorId:    req.user._id,
+        instructorId:    ownerId,
         templateId:      session.templateId,
         templateVersion: session.templateVersion,
         status:          EVALUATION_STATUS.DRAFT,
@@ -207,7 +217,7 @@ exports.publishEvaluations = asyncHandler(async (req, res, next) => {
   // 3. Find records to publish
   const filter = {
     sessionId,
-    instructorId: req.user._id,
+    ...scopedInstructorFilter(session, req.user),
     status:       { $in: [EVALUATION_STATUS.DRAFT, EVALUATION_STATUS.SUBMITTED] },
   };
   if (studentIds?.length) filter.studentId = { $in: studentIds };
@@ -231,7 +241,7 @@ exports.publishEvaluations = asyncHandler(async (req, res, next) => {
   // Update session evaluated count
   const publishedCount = await EvaluationRecord.countDocuments({
     sessionId,
-    instructorId: req.user._id,
+    ...scopedInstructorFilter(session, req.user),
     status:       EVALUATION_STATUS.PUBLISHED,
   });
   await GdSession.findByIdAndUpdate(sessionId, { evaluatedCount: publishedCount });
@@ -293,19 +303,7 @@ exports.getPublishedResults = asyncHandler(async (req, res, next) => {
     })
     .lean();
 
-  // For student view: strip out fields marked visibleToStudent: false
-  if (req.user.role === ROLES.STUDENT) {
-    records.forEach((record) => {
-      if (record.templateId?.fields) {
-        const visibleIds = new Set(
-          record.templateId.fields
-            .filter((f) => f.visibleToStudent)
-            .map((f) => f.fieldId)
-        );
-        record.fieldValues = record.fieldValues.filter((fv) => visibleIds.has(fv.fieldId));
-      }
-    });
-  }
+
 
   success(res, { results: records, total: records.length });
 });
@@ -322,7 +320,7 @@ exports.getEvaluationRecord = asyncHandler(async (req, res, next) => {
   let record = await EvaluationRecord.findOne({
     sessionId,
     studentId,
-    instructorId: req.user._id,
+    ...scopedInstructorFilter(session, req.user),
   }).populate('studentId', 'name email avatar');
 
   if (!record) {
@@ -330,7 +328,7 @@ exports.getEvaluationRecord = asyncHandler(async (req, res, next) => {
     record = await EvaluationRecord.create({
       sessionId,
       studentId,
-      instructorId:    req.user._id,
+      instructorId:    evaluationOwnerId(session, req.user),
       templateId:      session.templateId,
       templateVersion: session.templateVersion,
       status:          EVALUATION_STATUS.DRAFT,

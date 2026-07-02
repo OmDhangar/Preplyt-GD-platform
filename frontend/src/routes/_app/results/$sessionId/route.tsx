@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 import type { TemplateField } from "@/lib/types";
 import { PageHeader } from "@/components/brand/PageHeader";
+import { LoadingPage } from "@/components/brand/LoadingState";
 import { StatCard } from "@/components/brand/StatCard";
 import { FieldRenderer } from "@/components/rubric/FieldRenderer";
 import { fieldValuesArrayToMap } from "@/lib/rubric";
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/_app/results/$sessionId")({
 
 function StudentResults() {
   const { sessionId } = Route.useParams();
-  const { data: resultsData } = useQuery({
+  const { data: resultsData, isLoading } = useQuery({
     queryKey: ["myResults", sessionId],
     queryFn: async () =>
       (await apiGet<{ results: any[] }>(
@@ -34,7 +35,16 @@ function StudentResults() {
 
   const record = resultsData?.results?.[0];
 
-  if (!record) return <div className="text-text-muted-light">Loading…</div>;
+  if (isLoading) {
+    return <LoadingPage title="Loading your results" subtitle="Fetching published feedback and scores" />;
+  }
+  if (!record) {
+    return (
+      <div className="bg-white border rounded-2xl p-8 text-center text-text-muted-light">
+        No published results are available for this session yet.
+      </div>
+    );
+  }
   const valueMap = fieldValuesArrayToMap(record.fieldValues || []);
 
   const data: PublishedResult = {

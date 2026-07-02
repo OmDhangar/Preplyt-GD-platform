@@ -12,6 +12,7 @@ interface Props {
   className?: string;
   backUrl?: string;
   showBack?: boolean;
+  backBehavior?: "logical" | "history";
 }
 
 export function PageHeader({
@@ -23,14 +24,17 @@ export function PageHeader({
   className,
   backUrl,
   showBack,
+  backBehavior = "logical",
 }: Props) {
   const navigate = useNavigate();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    if (backBehavior === "history" && window.history.length > 1) {
       window.history.back();
     } else if (backUrl) {
       navigate({ to: backUrl });
+    } else if (window.history.length > 1) {
+      window.history.back();
     } else {
       navigate({ to: "/" });
     }

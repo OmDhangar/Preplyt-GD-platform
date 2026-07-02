@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { apiGet } from "@/lib/api";
 import { PageHeader } from "@/components/brand/PageHeader";
+import { LoadingPage } from "@/components/brand/LoadingState";
 import { StatCard } from "@/components/brand/StatCard";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -23,12 +24,26 @@ function ResultsPage() {
   const { role } = useAuth();
   const { id } = Route.useParams();
 
-  const { data: resultsData } = useQuery({
+  const { data: resultsData, isLoading } = useQuery({
     enabled: role !== "student",
     queryKey: ["sessionResults", id],
     queryFn: async () =>
       (await apiGet<{ results: any[] }>(`/evaluations/sessions/${id}/results`)).data,
   });
+
+  const rows = useMemo<ResultRow[]>(() => {
+    return (resultsData?.results || []).map((r) => ({
+      studentId: r.studentId?._id || r.studentId,
+      name: r.studentId?.name || "Unknown",
+      totalScore: r.totalScore || 0,
+      maxScore: r.maxScore || 0,
+      percentScore: r.percentScore || 0,
+    }));
+  }, [resultsData]);
+  const avg =
+    rows.length > 0
+      ? Math.round(rows.reduce((a, b) => a + b.percentScore, 0) / rows.length)
+      : 0;
 
   if (role === "student") {
     return (
@@ -44,19 +59,9 @@ function ResultsPage() {
     );
   }
 
-  const rows = useMemo<ResultRow[]>(() => {
-    return (resultsData?.results || []).map((r) => ({
-      studentId: r.studentId?._id || r.studentId,
-      name: r.studentId?.name || "Unknown",
-      totalScore: r.totalScore || 0,
-      maxScore: r.maxScore || 0,
-      percentScore: r.percentScore || 0,
-    }));
-  }, [resultsData]);
-  const avg =
-    rows.length > 0
-      ? Math.round(rows.reduce((a, b) => a + b.percentScore, 0) / rows.length)
-      : 0;
+  if (isLoading) {
+    return <LoadingPage title="Loading results" subtitle="Fetching published session results" />;
+  }
 
   return (
     <div>

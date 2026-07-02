@@ -3,10 +3,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiGet, apiDelete } from "@/lib/api";
 import { PageHeader } from "@/components/brand/PageHeader";
+import { LoadingPage } from "@/components/brand/LoadingState";
 import { StatCard } from "@/components/brand/StatCard";
 import { IconCircle } from "@/components/brand/IconCircle";
 import { Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +58,7 @@ interface InstructorStats {
 function InstructorDashboard() {
   const { role } = useAuth();
   const qc = useQueryClient();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -69,6 +71,7 @@ function InstructorDashboard() {
   }, [qc]);
 
   const connectGoogleCalendar = async () => {
+    setGoogleLoading(true);
     try {
       const redirectUri = window.location.origin + "/auth/google/callback";
       const { data: resp } = await apiGet<{ authUrl: string }>(`/auth/google/connect-url?redirectUri=${encodeURIComponent(redirectUri)}`);
@@ -85,24 +88,32 @@ function InstructorDashboard() {
       );
     } catch (e) {
       toast.error("Failed to initiate Google Calendar connection.");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
   const disconnectGoogleCalendar = async () => {
     if (!confirm("Are you sure you want to disconnect Google Calendar? This will disable automated Google Meet link generation.")) return;
+    setGoogleLoading(true);
     try {
       await apiDelete("/auth/google/disconnect");
       toast.success("Google Calendar disconnected successfully.");
       qc.invalidateQueries({ queryKey: ["dashboard", "instructor"] });
     } catch (e) {
       toast.error("Failed to disconnect Google Calendar.");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["dashboard", "instructor"],
     queryFn: async () => (await apiGet<InstructorStats>("/dashboard/instructor")).data,
   });
+  if (isLoading) {
+    return <LoadingPage title="Loading dashboard" subtitle="Collecting your sessions and stats" />;
+  }
   const s = data || {};
 
   return (
@@ -271,16 +282,18 @@ function InstructorDashboard() {
                   <Button
                     variant="outline"
                     onClick={disconnectGoogleCalendar}
+                    disabled={googleLoading}
                     className="text-accent-red hover:bg-red-50 hover:text-accent-red border-red-200 text-sm"
                   >
-                    Disconnect Calendar
+                    {googleLoading ? "Disconnecting..." : "Disconnect Calendar"}
                   </Button>
                 ) : (
                   <Button
                     onClick={connectGoogleCalendar}
+                    disabled={googleLoading}
                     className="bg-accent-teal hover:bg-accent-teal-bright text-white text-sm"
                   >
-                    Connect Google Calendar
+                    {googleLoading ? "Connecting..." : "Connect Google Calendar"}
                   </Button>
                 )}
               </div>
@@ -306,10 +319,13 @@ interface StudentStats {
 }
 
 function StudentDashboard() {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["dashboard", "student"],
     queryFn: async () => (await apiGet<StudentStats>("/dashboard/student")).data,
   });
+  if (isLoading) {
+    return <LoadingPage title="Loading dashboard" subtitle="Fetching assigned sessions and results" />;
+  }
   const s = data || {};
   return (
     <div>

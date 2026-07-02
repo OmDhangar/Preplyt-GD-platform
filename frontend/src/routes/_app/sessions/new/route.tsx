@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
 import type { Session, Template, User } from "@/lib/types";
 import { PageHeader } from "@/components/brand/PageHeader";
+import { LoadingSection } from "@/components/brand/LoadingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,13 +29,13 @@ function NewSession() {
   const navigate = useNavigate();
   const { role, user } = useAuth();
 
-  const { data: templates } = useQuery({
+  const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ["templates", "published"],
     queryFn: async () =>
       (await apiGet<Template[]>("/templates?status=active")).data,
   });
 
-  const { data: instructors } = useQuery({
+  const { data: instructors, isLoading: instructorsLoading } = useQuery({
     enabled: role === "admin",
     queryKey: ["users", "instructors", "verified"],
     queryFn: async () => {
@@ -110,6 +111,11 @@ function NewSession() {
         {role === "admin" && (
           <div>
             <Label htmlFor="instructorId">Assign Instructor</Label>
+            {instructorsLoading ? (
+              <div className="mt-2">
+                <LoadingSection rows={1} />
+              </div>
+            ) : (
             <Select
               value={form.instructorId}
               onValueChange={(v) => setForm({ ...form, instructorId: v })}
@@ -125,6 +131,7 @@ function NewSession() {
                 ))}
               </SelectContent>
             </Select>
+            )}
           </div>
         )}
         <div>
@@ -139,6 +146,11 @@ function NewSession() {
         </div>
         <div>
           <Label>Template</Label>
+          {templatesLoading ? (
+            <div className="mt-2">
+              <LoadingSection rows={1} />
+            </div>
+          ) : (
           <Select value={form.templateId}
             onValueChange={(v) => setForm({ ...form, templateId: v })}>
             <SelectTrigger><SelectValue placeholder="Choose a template" /></SelectTrigger>
@@ -148,6 +160,7 @@ function NewSession() {
               ))}
             </SelectContent>
           </Select>
+          )}
         </div>
         <div>
           <Label htmlFor="when">Scheduled at</Label>
@@ -190,7 +203,7 @@ function NewSession() {
             </div>
           </div>
         )}
-        <Button type="submit" disabled={loading}
+        <Button type="submit" disabled={loading || templatesLoading || instructorsLoading}
           className="bg-accent-teal hover:bg-accent-teal-bright">
           {loading ? "Creating…" : "Create session"}
         </Button>

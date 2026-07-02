@@ -790,12 +790,12 @@ async function main() {
     assertEqual(res.data.data.results.length, 1, 'student should see exactly 1 result (their own)');
   });
 
-  await test('GET .../results — hidden fields (visibleToStudent:false) stripped from student view', async () => {
+  await test('GET .../results — hidden fields (visibleToStudent:false) are visible to student for transparency', async () => {
     const res = await api('GET', `/api/evaluations/sessions/${session._id}/results`, { token: students[0].token });
     const record = res.data.data.results[0];
     const fieldIds = record.fieldValues.map((f) => f.fieldId);
-    assert(!fieldIds.includes('dominant'), 'hidden field "dominant" must NOT be visible to student');
-    assert(!fieldIds.includes('notes'), 'hidden field "notes" must NOT be visible to student');
+    assert(fieldIds.includes('dominant'), 'field "dominant" should be visible to student');
+    assert(fieldIds.includes('notes'), 'field "notes" should be visible to student');
     assert(fieldIds.includes('communication'), 'visible field "communication" should be present');
     assert(fieldIds.includes('leadership'), 'visible field "leadership" should be present');
   });
