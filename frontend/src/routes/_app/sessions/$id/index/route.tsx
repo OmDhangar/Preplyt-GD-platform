@@ -85,6 +85,7 @@ function SessionDetail() {
       const resp = await apiGet<{ users: User[] }>("/users?role=instructor&limit=1000");
       return (resp.data.users || []).filter((u) => u.isVerified);
     },
+    enabled: isStaff,
   });
 
   // Add attachment state
@@ -167,7 +168,7 @@ function SessionDetail() {
     setLoadingReschedule(true);
     try {
       await apiPatch(`/sessions/${id}/reschedule`, {
-        newScheduledAt: newDateInput,
+        newScheduledAt: new Date(newDateInput).toISOString(),
         durationMins: Number(newDurationInput),
       });
       toast.success("Session rescheduled successfully");
@@ -362,7 +363,13 @@ function SessionDetail() {
             session={session}
             isStaff={isStaff}
             onRescheduleClick={() => {
-              setNewDateInput(session.scheduledAt ? session.scheduledAt.substring(0, 16) : "");
+              let localTime = "";
+              if (session.scheduledAt) {
+                const date = new Date(session.scheduledAt);
+                const tzOffset = date.getTimezoneOffset() * 60000;
+                localTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+              }
+              setNewDateInput(localTime);
               setNewDurationInput(session.durationMins || 45);
               setShowRescheduleModal(true);
             }}

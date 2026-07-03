@@ -41,6 +41,7 @@ function NewSession() {
       const resp = await apiGet<{ users: User[] }>("/users?role=instructor&limit=1000");
       return (resp.data.users || []).filter((u) => u.isVerified);
     },
+    enabled: role === "admin" || (role === "instructor" && !!user?.isVerified),
   });
 
   const [form, setForm] = useState<{
@@ -76,7 +77,7 @@ function NewSession() {
     try {
       const created = await apiPost<{ session: Session }>("/sessions", {
         ...form,
-        scheduledAt: form.scheduledAt || undefined,
+        scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
         googleMeetUrl: form.googleMeetUrl || undefined,
         price: form.requiresPayment ? Number(form.price) : undefined,
         autoCreateMeet: form.autoCreateMeet,

@@ -37,10 +37,10 @@ export function TopNav() {
             </button>
           )}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal">
+            <div className="h-9 w-9 rounded-full bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal shrink-0">
               GD
             </div>
-            <span className="font-display text-lg tracking-tight">
+            <span className="hidden sm:inline-block font-display text-lg tracking-tight">
               Preplyt <span className="text-gradient-teal font-semibold">GD</span>
             </span>
           </Link>

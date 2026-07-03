@@ -11,7 +11,7 @@ router.get('/me/profile',   ctrl.getMyProfile);
 router.patch('/me/profile', ctrl.updateMyProfile);
 
 // Admin only
-router.get('/',               restrictTo('admin'), ctrl.getAllUsers);
+router.get('/',               restrictTo('admin', 'instructor'), ctrl.getAllUsers);
 router.patch('/:id/status',   restrictTo('admin'), ctrl.setUserActive);
 
 // Admin — Instructor verification management
