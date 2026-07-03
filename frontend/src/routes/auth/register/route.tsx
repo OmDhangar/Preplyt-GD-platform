@@ -54,6 +54,7 @@ function RegisterPage() {
 
         (window as any).google.accounts.id.initialize({
           client_id: clientId,
+          use_fedcm_for_prompt: true,
           callback: async (response: any) => {
             setLoading(true);
             try {
@@ -123,6 +124,7 @@ function RegisterPage() {
 
         (window as any).google.accounts.id.initialize({
           client_id: clientId,
+          use_fedcm_for_prompt: true,
           callback: async (response: any) => {
             setLoading(true);
             try {
@@ -147,13 +149,13 @@ function RegisterPage() {
 
       (window as any).google.accounts.id.prompt((notification: any) => {
         if (
-          notification.isNotDisplayed() ||
           notification.isSkippedMoment() ||
           notification.isDismissedMoment()
         ) {
           setLoading(false);
         }
       });
+      setLoading(false);
     } catch (err) {
       toast.error("Failed to load Google Sign-In SDK.");
       setLoading(false);
