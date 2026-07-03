@@ -27,7 +27,6 @@ function RegisterPage() {
   const [googleEmail, setGoogleEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const googleInitializedRef = useRef(false);
   const roleRef = useRef(role);
 
   useEffect(() => {
@@ -36,7 +35,7 @@ function RegisterPage() {
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId || googleInitializedRef.current) return;
+    if (!clientId) return;
 
     const loadAndInitGoogle = async () => {
       try {
@@ -52,36 +51,48 @@ function RegisterPage() {
           });
         }
 
-        (window as any).google.accounts.id.initialize({
-          client_id: clientId,
-          use_fedcm_for_prompt: true,
-          callback: async (response: any) => {
-            setLoading(true);
-            try {
-              const user = await loginGoogle(response.credential, roleRef.current);
-              const isAllowed = user.role === roleRef.current || (roleRef.current === "instructor" && user.role === "admin");
-              if (!isAllowed) {
-                await logout();
-                toast.error(`This Google account is registered as a ${user.role}. Please register or switch roles.`);
-              } else {
-                toast.success("Account created & Google Sign In successful");
-                navigate({ to: "/dashboard" });
+        if (!(window as any).googleInitialized) {
+          (window as any).google.accounts.id.initialize({
+            client_id: clientId,
+            callback: (response: any) => {
+              if (typeof (window as any).onGoogleCredential === "function") {
+                (window as any).onGoogleCredential(response);
               }
-            } catch (err) {
-              toast.error(err instanceof ApiError ? err.message : "Google registration failed");
-            } finally {
-              setLoading(false);
-            }
-          },
-        });
-
-        googleInitializedRef.current = true;
+            },
+          });
+          (window as any).googleInitialized = true;
+        }
       } catch (err) {
         console.error("Failed to initialize Google Sign-In SDK:", err);
       }
     };
 
     loadAndInitGoogle();
+  }, []);
+
+  useEffect(() => {
+    (window as any).onGoogleCredential = async (response: any) => {
+      setLoading(true);
+      try {
+        const user = await loginGoogle(response.credential, roleRef.current);
+        const isAllowed = user.role === roleRef.current || (roleRef.current === "instructor" && user.role === "admin");
+        if (!isAllowed) {
+          await logout();
+          toast.error(`This Google account is registered as a ${user.role}. Please register or switch roles.`);
+        } else {
+          toast.success("Account created & Google Sign In successful");
+          navigate({ to: "/dashboard" });
+        }
+      } catch (err) {
+        toast.error(err instanceof ApiError ? err.message : "Google registration failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return () => {
+      delete (window as any).onGoogleCredential;
+    };
   }, [loginGoogle, logout, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -109,55 +120,34 @@ function RegisterPage() {
     
     setLoading(true);
     try {
-      if (!googleInitializedRef.current || !(window as any).google?.accounts?.id) {
-        if (!(window as any).google) {
-          await new Promise<void>((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = "https://accounts.google.com/gsi/client";
-            script.async = true;
-            script.defer = true;
-            script.onload = () => resolve();
-            script.onerror = () => reject(new Error("Failed to load Google SDK script"));
-            document.body.appendChild(script);
-          });
-        }
+      if (!(window as any).google) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://accounts.google.com/gsi/client";
+          script.async = true;
+          script.defer = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Google SDK script"));
+          document.body.appendChild(script);
+        });
+      }
 
+      if (!(window as any).googleInitialized) {
         (window as any).google.accounts.id.initialize({
           client_id: clientId,
-          use_fedcm_for_prompt: true,
-          callback: async (response: any) => {
-            setLoading(true);
-            try {
-              const user = await loginGoogle(response.credential, roleRef.current);
-              const isAllowed = user.role === roleRef.current || (roleRef.current === "instructor" && user.role === "admin");
-              if (!isAllowed) {
-                await logout();
-                toast.error(`This Google account is registered as a ${user.role}. Please register or switch roles.`);
-              } else {
-                toast.success("Account created & Google Sign In successful");
-                navigate({ to: "/dashboard" });
-              }
-            } catch (err) {
-              toast.error(err instanceof ApiError ? err.message : "Google registration failed");
-            } finally {
-              setLoading(false);
+          callback: (response: any) => {
+            if (typeof (window as any).onGoogleCredential === "function") {
+              (window as any).onGoogleCredential(response);
             }
           },
         });
-        googleInitializedRef.current = true;
+        (window as any).googleInitialized = true;
       }
 
-      (window as any).google.accounts.id.prompt((notification: any) => {
-        if (
-          notification.isSkippedMoment() ||
-          notification.isDismissedMoment()
-        ) {
-          setLoading(false);
-        }
-      });
-      setLoading(false);
+      (window as any).google.accounts.id.prompt();
     } catch (err) {
       toast.error("Failed to load Google Sign-In SDK.");
+    } finally {
       setLoading(false);
     }
   };
