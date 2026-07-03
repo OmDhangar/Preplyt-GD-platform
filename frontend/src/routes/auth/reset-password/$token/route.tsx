@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { apiPatch, ApiError } from "@/lib/api";
 import { AuthShell } from "@/routes/auth/login/route";
+import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/auth/reset-password/$token")({
   ssr: false,
@@ -17,6 +18,7 @@ function ResetPage() {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +39,18 @@ function ResetPage() {
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="password" className="text-white/80">New password</Label>
-          <Input id="password" type="password" required minLength={6} value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="bg-bg-dark border-white/10 text-white" />
+          <div className="relative">
+            <Input id="password" type={showPassword ? "text" : "password"} required minLength={6} value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-bg-dark border-white/10 text-white pr-10" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors duration-200 cursor-pointer"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <Button type="submit" disabled={loading}
           className="w-full bg-accent-teal hover:bg-accent-teal-bright">

@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate, useSearch, useHydrated } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth/login")({
   ssr: false,
@@ -25,6 +26,63 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showGoogleMock, setShowGoogleMock] = useState(false);
   const [googleEmail, setGoogleEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const googleInitializedRef = useRef(false);
+  const roleRef = useRef(role);
+
+  useEffect(() => {
+    roleRef.current = role;
+  }, [role]);
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId || googleInitializedRef.current) return;
+
+    const loadAndInitGoogle = async () => {
+      try {
+        if (!(window as any).google) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://accounts.google.com/gsi/client";
+            script.async = true;
+            script.defer = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Failed to load Google SDK script"));
+            document.body.appendChild(script);
+          });
+        }
+
+        (window as any).google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response: any) => {
+            setLoading(true);
+            try {
+              const user = await loginGoogle(response.credential, roleRef.current);
+              const isAllowed = user.role === roleRef.current || (roleRef.current === "instructor" && user.role === "admin");
+              if (!isAllowed) {
+                await logout();
+                toast.error(`This Google account is registered as a ${user.role}. Please switch roles or use the correct login.`);
+              } else {
+                toast.success("Google Login successful");
+                navigate({ to: redirect || "/dashboard" });
+              }
+            } catch (err) {
+              toast.error(err instanceof ApiError ? err.message : "Google Login failed");
+            } finally {
+              setLoading(false);
+            }
+          },
+        });
+
+        googleInitializedRef.current = true;
+      } catch (err) {
+        console.error("Failed to initialize Google Sign-In SDK:", err);
+      }
+    };
+
+    loadAndInitGoogle();
+  }, [loginGoogle, logout, navigate, redirect]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,44 +113,57 @@ function LoginPage() {
       return;
     }
     
+    setLoading(true);
     try {
-      if (!(window as any).google) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://accounts.google.com/gsi/client";
-          script.async = true;
-          script.defer = true;
-          script.onload = () => resolve();
-          script.onerror = reject;
-          document.body.appendChild(script);
+      if (!googleInitializedRef.current || !(window as any).google?.accounts?.id) {
+        if (!(window as any).google) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://accounts.google.com/gsi/client";
+            script.async = true;
+            script.defer = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Failed to load Google SDK script"));
+            document.body.appendChild(script);
+          });
+        }
+
+        (window as any).google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response: any) => {
+            setLoading(true);
+            try {
+              const user = await loginGoogle(response.credential, roleRef.current);
+              const isAllowed = user.role === roleRef.current || (roleRef.current === "instructor" && user.role === "admin");
+              if (!isAllowed) {
+                await logout();
+                toast.error(`This Google account is registered as a ${user.role}. Please switch roles or use the correct login.`);
+              } else {
+                toast.success("Google Login successful");
+                navigate({ to: redirect || "/dashboard" });
+              }
+            } catch (err) {
+              toast.error(err instanceof ApiError ? err.message : "Google Login failed");
+            } finally {
+              setLoading(false);
+            }
+          },
         });
+        googleInitializedRef.current = true;
       }
 
-      (window as any).google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response: any) => {
-          setLoading(true);
-          try {
-            const user = await loginGoogle(response.credential, role);
-            const isAllowed = user.role === role || (role === "instructor" && user.role === "admin");
-            if (!isAllowed) {
-              await logout();
-              toast.error(`This Google account is registered as a ${user.role}. Please switch roles or use the correct login.`);
-            } else {
-              toast.success("Google Login successful");
-              navigate({ to: redirect || "/dashboard" });
-            }
-          } catch (err) {
-            toast.error(err instanceof ApiError ? err.message : "Google Login failed");
-          } finally {
-            setLoading(false);
-          }
-        },
+      (window as any).google.accounts.id.prompt((notification: any) => {
+        if (
+          notification.isNotDisplayed() ||
+          notification.isSkippedMoment() ||
+          notification.isDismissedMoment()
+        ) {
+          setLoading(false);
+        }
       });
-
-      (window as any).google.accounts.id.prompt();
     } catch (err) {
       toast.error("Failed to load Google Sign-In SDK.");
+      setLoading(false);
     }
   };
 
@@ -153,10 +224,19 @@ function LoginPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password" className="text-white/80">Password</Label>
-          <Input id="password" type="password" required value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="bg-bg-dark border-white/10 text-white" />
+          <div className="relative">
+            <Input id="password" type={showPassword ? "text" : "password"} required value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="bg-bg-dark border-white/10 text-white pr-10" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors duration-200 cursor-pointer"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <Button type="submit" disabled={loading}
           className="w-full bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal font-medium py-5">
@@ -175,16 +255,26 @@ function LoginPage() {
 
       <Button
         onClick={handleGoogleLogin}
+        disabled={loading}
         variant="outline"
-        className="w-full border-white/10 hover:border-white/20 text-white bg-bg-dark/40 hover:bg-bg-dark flex items-center justify-center gap-2.5 py-5 cursor-pointer"
+        className="w-full border-transparent bg-white hover:bg-neutral-100 text-[#050811] flex items-center justify-center gap-2.5 py-5 cursor-pointer transition-colors duration-200"
       >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-        </svg>
-        Sign in with Google
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin text-[#050811]" />
+            Connecting to Google...
+          </>
+        ) : (
+          <>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            </svg>
+            Sign in with Google
+          </>
+        )}
       </Button>
 
       <div className="flex justify-between text-xs text-text-muted-dark pt-6 mt-2 border-t border-white/5">
