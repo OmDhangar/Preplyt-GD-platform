@@ -389,10 +389,10 @@ function LandingPage() {
                     <div className="space-y-4 text-left">
                       <div className="flex items-start justify-between gap-2">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${s.status === "active"
-                            ? "bg-accent-teal/10 text-accent-teal"
-                            : s.status === "completed"
-                              ? "bg-white/10 text-text-muted-dark"
-                              : "bg-amber-500/10 text-amber-500"
+                          ? "bg-accent-teal/10 text-accent-teal"
+                          : s.status === "completed"
+                            ? "bg-white/10 text-text-muted-dark"
+                            : "bg-amber-500/10 text-amber-500"
                           }`}>
                           {s.status === "active" ? "LIVE NOW" : s.status === "completed" ? "Completed" : "Upcoming"}
                         </span>
@@ -519,15 +519,15 @@ function LandingPage() {
             <div className="bg-surface-dark border border-white/5 rounded-2xl p-6 space-y-4 hover:border-white/10 transition text-left">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-gradient-teal overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow-glow-teal">
-                  AD
+                  AP
                 </div>
                 <div>
-                  <h4 className="font-display font-bold text-lg text-white">Dr. Anita Desai</h4>
-                  <p className="text-xs text-text-muted-dark">Associate Professor, IIM Nagpur</p>
+                  <h4 className="font-display font-bold text-lg text-white">Mr.Ananth Pai</h4>
+                  <p className="text-xs text-text-muted-dark">FACTSET</p>
                 </div>
               </div>
               <p className="text-sm text-text-muted-dark">
-                Specialist in MBA admissions and group discussion facilitation. Over 10 years of academic experience.
+                Ex-BSE
               </p>
               <div className="flex gap-2">
                 <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">GD Facilitation</span>
@@ -538,38 +538,19 @@ function LandingPage() {
             <div className="bg-surface-dark border border-white/5 rounded-2xl p-6 space-y-4 hover:border-white/10 transition text-left">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-gradient-teal overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow-glow-teal">
-                  SM
+                  HV
                 </div>
                 <div>
-                  <h4 className="font-display font-bold text-lg text-white">Prof. Suresh Menon</h4>
-                  <p className="text-xs text-text-muted-dark">Senior Lecturer, IIM Nagpur</p>
+                  <h4 className="font-display font-bold text-lg text-white">Mr. Harsh Vakharia</h4>
+                  <p className="text-xs text-text-muted-dark">APOLLO GLOBAL</p>
                 </div>
               </div>
               <p className="text-sm text-text-muted-dark">
-                Corporate behavior expert focusing on personality assessments and communication dynamics.
+                Financial Analyst
               </p>
               <div className="flex gap-2">
                 <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Leadership</span>
                 <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Personality</span>
-              </div>
-            </div>
-
-            <div className="bg-surface-dark border border-white/5 rounded-2xl p-6 space-y-4 hover:border-white/10 transition text-left">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-teal overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow-glow-teal">
-                  RK
-                </div>
-                <div>
-                  <h4 className="font-display font-bold text-lg text-white">Rajesh Kumar</h4>
-                  <p className="text-xs text-text-muted-dark">Soft Skills Trainer, Ex-Corporate</p>
-                </div>
-              </div>
-              <p className="text-sm text-text-muted-dark">
-                Industry-focused coach helping candidates perfect their verbal delivery and active response.
-              </p>
-              <div className="flex gap-2">
-                <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Soft Skills</span>
-                <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Interview prep</span>
               </div>
             </div>
           </div>
