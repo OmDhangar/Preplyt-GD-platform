@@ -273,7 +273,7 @@ function LoginPage() {
         <Link to="/auth/forgot-password" className="hover:text-accent-teal transition">
           Forgot password?
         </Link>
-        <Link to="/auth/register" className="hover:text-accent-teal transition">
+        <Link to="/auth/register" search={{ redirect }} className="hover:text-accent-teal transition">
           Create account
         </Link>
       </div>

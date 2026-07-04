@@ -31,9 +31,14 @@ const assertInstructorAccess = (session, user) => {
 
 // ── POST /api/sessions ────────────────────────────────────────────────────────
 exports.createSession = asyncHandler(async (req, res, next) => {
-  const template = await EvaluationTemplate.findById(req.body.templateId);
-  if (!template || template.status === 'archived') {
-    return next(new AppError('Template not found or archived.', 404));
+  let templateVersion = 1;
+
+  if (req.body.sessionType !== 'podcast') {
+    const template = await EvaluationTemplate.findById(req.body.templateId);
+    if (!template || template.status === 'archived') {
+      return next(new AppError('Template not found or archived.', 404));
+    }
+    templateVersion = template.version;
   }
 
   // Determine the instructor: admin can assign any verified instructor
@@ -69,7 +74,7 @@ exports.createSession = asyncHandler(async (req, res, next) => {
     ...req.body,
     instructorId: assignedInstructorId,
     createdBy: req.user._id,
-    templateVersion: template.version,
+    ...(req.body.sessionType !== 'podcast' ? { templateVersion } : { templateId: undefined, templateVersion: undefined }),
     ...(googleMeetUrl ? { googleMeetUrl } : {}),
   });
 
@@ -246,6 +251,7 @@ exports.updateSession = asyncHandler(async (req, res, next) => {
     'title', 'description', 'topic', 'scheduledAt', 'durationMins',
     'maxParticipants', 'requiresPayment', 'sessionFee', 'settings',
     'tags', 'coInstructors', 'googleMeetUrl', 'templateId', 'templateVersion',
+    'sessionType',
   ];
   const updates = {};
   for (const key of allowedKeys) {
@@ -454,26 +460,18 @@ exports.joinSession = asyncHandler(async (req, res, next) => {
     return next(new AppError('This session requires payment. Use the payment flow to join.', 400));
   }
 
-  // Create or update participant
-  const participant = await SessionParticipant.findOneAndUpdate(
-    { sessionId: session._id, studentId: req.user._id },
-    {
-      $set: {
-        isPaid: true,
-        status: PARTICIPANT_STATUS.REGISTERED,
-        registeredAt: new Date(),
-      },
-    },
-    { upsert: true, new: true }
-  );
+  // Use reservation service for atomic seat checking and booking
+  const { instantBook } = require('../services/reservation.service');
+
+  let result;
+  try {
+    result = await instantBook(session._id, req.user._id);
+  } catch (err) {
+    return next(new AppError(err.message, err.statusCode || 400));
+  }
 
   // Update student list in session
   await GdSession.findByIdAndUpdate(session._id, { $addToSet: { students: req.user._id } });
-
-  // Update participant count
-  const count = await SessionParticipant.countDocuments({ sessionId: session._id });
-  session.participantCount = count;
-  await session.save();
 
   // Update student stats
   await StudentProfile.findOneAndUpdate(
@@ -482,11 +480,11 @@ exports.joinSession = asyncHandler(async (req, res, next) => {
     { upsert: true }
   ).catch(() => { });
 
-  // Send GD subscription confirmation email with all details and Google Meet link
+  // Send session-type-aware subscription confirmation email with all details and Google Meet link
   const instructor = session.instructorId; // already populated
   emailService.sendGdSubscription(req.user, session, instructor).catch(() => { });
 
-  success(res, { participant }, 'Joined session successfully');
+  success(res, { participant: result.participant }, 'Joined session successfully');
 });
 
 // ── POST /api/sessions/:sessionId/google-meet ───────────────────────────────

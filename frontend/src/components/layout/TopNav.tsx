@@ -15,7 +15,7 @@ const getInitials = (name: string) => {
 export function TopNav() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { toggleMobile } = useSidebarStore();
+  const { toggleCollapsed } = useSidebarStore();
 
   const onLogout = async () => {
     await logout();
@@ -23,13 +23,13 @@ export function TopNav() {
   };
 
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-xl bg-bg-dark/85 text-text-on-dark border-b border-hairline-dark">
+    <header className="sticky top-0 z-30 backdrop-blur-xl bg-bg-dark/90 text-text-on-dark border-b border-hairline-dark">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {user && (
             <button
-              onClick={toggleMobile}
-              className="p-2 -ml-2 rounded-lg text-text-muted-dark hover:text-text-on-dark hover:bg-surface-dark md:hidden transition cursor-pointer"
+              onClick={toggleCollapsed}
+              className="p-2 -ml-2 rounded-lg text-text-muted-dark hover:text-text-on-dark hover:bg-surface-dark transition cursor-pointer"
               title="Toggle menu"
               aria-label="Toggle menu"
             >

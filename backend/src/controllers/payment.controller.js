@@ -35,6 +35,15 @@ exports.createOrder = asyncHandler(async (req, res, next) => {
     return next(new AppError('You have already paid for this session.', 409));
   }
 
+  // ── Reserve a seat (15-minute lock) before creating payment order ──────────
+  const { reserveSeat } = require('../services/reservation.service');
+  let reservation;
+  try {
+    reservation = await reserveSeat(session._id, req.user._id);
+  } catch (err) {
+    return next(new AppError(err.message, err.statusCode || 400));
+  }
+
   const provider = getProvider();
   const amount   = session.sessionFee.amount * 100; // convert to paise
 
@@ -52,10 +61,11 @@ exports.createOrder = asyncHandler(async (req, res, next) => {
     },
   });
 
-  // Save payment record in DB
+  // Save payment record in DB — link to the reserved participant
   const payment = await Payment.create({
     userId:    req.user._id,
     sessionId: session._id,
+    participantId: reservation.participant._id,
     provider:  process.env.PAYMENT_PROVIDER || 'razorpay',
     amount,
     currency:  session.sessionFee.currency || 'INR',
@@ -126,10 +136,11 @@ exports.verifyPayment = asyncHandler(async (req, res, next) => {
     { sessionId: payment.sessionId, studentId: payment.userId },
     {
       $set: {
-        isPaid:       true,
-        paymentId:    payment._id,
-        status:       PARTICIPANT_STATUS.REGISTERED,
-        registeredAt: new Date(),
+        isPaid:        true,
+        paymentId:     payment._id,
+        status:        PARTICIPANT_STATUS.REGISTERED,
+        registeredAt:  new Date(),
+        reservedUntil: null,
       },
     },
     { upsert: true, new: true }
@@ -216,8 +227,11 @@ exports.handleWebhook = asyncHandler(async (req, res) => {
           { sessionId: payment.sessionId, studentId: payment.userId },
           {
             $set: {
-              isPaid: true, paymentId: payment._id,
-              status: PARTICIPANT_STATUS.REGISTERED, registeredAt: new Date(),
+              isPaid:        true,
+              paymentId:     payment._id,
+              status:        PARTICIPANT_STATUS.REGISTERED,
+              registeredAt:  new Date(),
+              reservedUntil: null,
             },
           },
           { upsert: true }

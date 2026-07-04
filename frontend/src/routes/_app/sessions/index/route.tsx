@@ -191,14 +191,29 @@ function SessionsList() {
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-1 text-xs text-text-muted-light font-medium">
-                        <Award className="h-4 w-4 text-accent-teal" /> Evaluation Available
-                      </div>
-                      <Link to="/results/$sessionId" params={{ sessionId: s._id }}>
-                        <Button className="bg-accent-teal hover:bg-accent-teal-bright text-white text-xs px-3">
-                          View Results
-                        </Button>
-                      </Link>
+                      {s.sessionType !== "podcast" ? (
+                        <>
+                          <div className="flex items-center gap-1 text-xs text-text-muted-light font-medium">
+                            <Award className="h-4 w-4 text-accent-teal" /> Evaluation Available
+                          </div>
+                          <Link to="/results/$sessionId" params={{ sessionId: s._id }}>
+                            <Button className="bg-accent-teal hover:bg-accent-teal-bright text-white text-xs px-3">
+                              View Results
+                            </Button>
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-1 text-xs text-text-muted-light font-medium">
+                            🎧 Podcast Completed
+                          </div>
+                          <Link to="/sessions/$id" params={{ id: s._id }}>
+                            <Button variant="outline" className="text-xs px-3">
+                              Details & Feedback
+                            </Button>
+                          </Link>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
@@ -243,9 +258,20 @@ function SessionsList() {
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display font-semibold text-lg line-clamp-2">
-                    {s.title}
-                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-display font-semibold text-lg line-clamp-2">
+                      {s.title}
+                    </h3>
+                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
+                      s.sessionType === "personal_interview"
+                        ? "bg-purple-100 text-purple-700"
+                        : s.sessionType === "podcast"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-sky-100 text-sky-700"
+                    }`}>
+                      {s.sessionType === "personal_interview" ? "PI" : s.sessionType === "podcast" ? "Podcast" : "GD"}
+                    </span>
+                  </div>
                   <CornerPillBadge tone={statusTone[s.status] || "dark"}>
                     {s.status}
                   </CornerPillBadge>
@@ -276,7 +302,16 @@ function SessionsList() {
               </div>
 
               <div className="border-t border-hairline-light pt-4 mt-5 flex items-center justify-between text-xs text-text-muted-light">
-                <span>{s.participantCount || 0} participants</span>
+                <span className={
+                  s.maxParticipants && (s.participantCount ?? 0) >= s.maxParticipants
+                    ? "text-red-600 font-semibold"
+                    : ""
+                }>
+                  👥 {s.participantCount || 0}{s.maxParticipants ? ` / ${s.maxParticipants}` : ""} participants
+                  {s.maxParticipants && (s.participantCount ?? 0) >= s.maxParticipants && (
+                    <span className="ml-1.5 px-1.5 py-0.5 text-[9px] font-bold bg-red-100 text-red-700 rounded-full uppercase">Full</span>
+                  )}
+                </span>
                 {s.status === "active" ? (
                   <span className="text-accent-teal font-bold animate-pulse">● LIVE Evaluation</span>
                 ) : (

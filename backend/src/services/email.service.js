@@ -155,15 +155,30 @@ const sendSessionInvite = (student, session, instructor) =>
     `),
   });
 
-// ── 5. GD Subscription Confirmation ───────────────────────────────────────────
-// Sent when a student subscribes/joins/pays for a GD
-const sendGdSubscription = (student, session, instructor) =>
+// ── 5. Session Registration Confirmation (session-type-aware) ─────────────────
+// Dispatches to the correct email template based on session.sessionType
+const sendGdSubscription = (student, session, instructor) => {
+  const sessionType = session.sessionType || 'gd';
+
+  switch (sessionType) {
+    case 'personal_interview':
+      return sendPiSubscription(student, session, instructor);
+    case 'podcast':
+      return sendPodcastSubscription(student, session, instructor);
+    case 'gd':
+    default:
+      return sendGdSubscriptionEmail(student, session, instructor);
+  }
+};
+
+// ── 5a. GD Registration Email ─────────────────────────────────────────────────
+const sendGdSubscriptionEmail = (student, session, instructor) =>
   sendEmail({
     to:      student.email,
     subject: `✅ You're registered for GD: ${session.title}`,
     html:    wrap('GD Registration Confirmed', `
       <p>Hi <strong>${student.name}</strong>,</p>
-      <p>You have successfully registered for the following Group Discussion session:</p>
+      <p>You have successfully registered for the following <strong>Group Discussion</strong> session:</p>
       
       <div style="background:#f0f7ff;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #1a56db">
         <p style="font-size:18px;font-weight:bold;margin:0 0 8px">${session.title}</p>
@@ -171,7 +186,18 @@ const sendGdSubscription = (student, session, instructor) =>
         <p style="margin:4px 0">👨‍🏫 <strong>Instructor:</strong> ${instructor?.name || 'TBD'}</p>
         <p style="margin:4px 0">📅 <strong>Date & Time:</strong> ${formatDate(session.scheduledAt)}</p>
         <p style="margin:4px 0">⏱️ <strong>Duration:</strong> ${session.durationMins || 30} minutes</p>
+        <p style="margin:4px 0">👥 <strong>Max Participants:</strong> ${session.maxParticipants || 15}</p>
         ${session.joinCode ? `<p style="margin:4px 0">🔑 <strong>Join Code:</strong> <span style="font-size:18px;letter-spacing:3px;font-weight:bold">${session.joinCode}</span></p>` : ''}
+      </div>
+
+      <div style="background:#e0f2fe;padding:14px;border-radius:8px;margin:16px 0;border-left:4px solid #0ea5e9">
+        <p style="margin:0 0 6px;font-weight:bold">💡 Tips for a Great GD Performance</p>
+        <ul style="margin:0;padding-left:20px;font-size:14px;color:#333">
+          <li>Research the topic thoroughly beforehand</li>
+          <li>Listen actively and build on others' points</li>
+          <li>Be assertive but respectful — avoid interrupting</li>
+          <li>Structure your arguments with examples</li>
+        </ul>
       </div>
 
       ${session.googleMeetUrl ? `
@@ -188,6 +214,98 @@ const sendGdSubscription = (student, session, instructor) =>
       </a></p>
       
       <p style="color:#666;font-size:14px">Make sure to join on time. You'll receive a reminder 30 minutes before the session.</p>
+    `),
+  });
+
+// ── 5b. Personal Interview Registration Email ─────────────────────────────────
+const sendPiSubscription = (student, session, instructor) =>
+  sendEmail({
+    to:      student.email,
+    subject: `✅ You're registered for Personal Interview: ${session.title}`,
+    html:    wrap('Personal Interview Registration Confirmed', `
+      <p>Hi <strong>${student.name}</strong>,</p>
+      <p>You have successfully registered for the following <strong>Personal Interview</strong> session:</p>
+      
+      <div style="background:#fdf4ff;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #a855f7">
+        <p style="font-size:18px;font-weight:bold;margin:0 0 8px">🎤 ${session.title}</p>
+        ${session.topic ? `<p style="margin:4px 0">📋 <strong>Focus Area:</strong> ${session.topic}</p>` : ''}
+        <p style="margin:4px 0">👨‍🏫 <strong>Interviewer / Panel:</strong> ${instructor?.name || 'TBD'}</p>
+        <p style="margin:4px 0">📅 <strong>Date & Time:</strong> ${formatDate(session.scheduledAt)}</p>
+        <p style="margin:4px 0">⏱️ <strong>Duration:</strong> ${session.durationMins || 30} minutes</p>
+        <p style="margin:4px 0">👥 <strong>Panel Size:</strong> ${session.maxParticipants || 4} participants</p>
+        ${session.joinCode ? `<p style="margin:4px 0">🔑 <strong>Join Code:</strong> <span style="font-size:18px;letter-spacing:3px;font-weight:bold">${session.joinCode}</span></p>` : ''}
+      </div>
+
+      <div style="background:#fefce8;padding:14px;border-radius:8px;margin:16px 0;border-left:4px solid #eab308">
+        <p style="margin:0 0 6px;font-weight:bold">📝 How to Prepare for Your Interview</p>
+        <ul style="margin:0;padding-left:20px;font-size:14px;color:#333">
+          <li><strong>Dress professionally</strong> — formal or smart-casual attire recommended</li>
+          <li><strong>Prepare your resume</strong> — keep a copy handy for reference</li>
+          <li><strong>Practice common questions</strong> — "Tell me about yourself", strengths/weaknesses, career goals</li>
+          <li><strong>Research the context</strong> — understand the session topic or focus area</li>
+          <li><strong>Be punctual</strong> — join 5 minutes before the scheduled time</li>
+        </ul>
+      </div>
+
+      ${session.googleMeetUrl ? `
+        <div style="background:#e8f5e9;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #16a34a">
+          <p style="margin:0 0 8px;font-weight:bold">📹 Interview Room (Google Meet)</p>
+          <p style="margin:0"><a href="${session.googleMeetUrl}" style="color:#1a56db;font-size:16px;font-weight:bold">${session.googleMeetUrl}</a></p>
+          <p style="margin:8px 0 0;font-size:13px;color:#666">Join the meeting at the scheduled time. Ensure your camera and mic are working beforehand.</p>
+        </div>
+      ` : ''}
+
+      <p><a href="${process.env.FRONTEND_URL}/student/sessions"
+           style="display:inline-block;background:#a855f7;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">
+        View Interview Details
+      </a></p>
+      
+      <p style="color:#666;font-size:14px">Stay confident and be yourself. You'll receive a reminder 30 minutes before the interview. Good luck! 🍀</p>
+    `),
+  });
+
+// ── 5c. Podcast Registration Email ────────────────────────────────────────────
+const sendPodcastSubscription = (student, session, instructor) =>
+  sendEmail({
+    to:      student.email,
+    subject: `🎧 You're registered for Podcast: ${session.title}`,
+    html:    wrap('Podcast Registration Confirmed', `
+      <p>Hi <strong>${student.name}</strong>,</p>
+      <p>You have successfully registered for the following <strong>Podcast</strong> session:</p>
+      
+      <div style="background:#ecfdf5;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #10b981">
+        <p style="font-size:18px;font-weight:bold;margin:0 0 8px">🎙️ ${session.title}</p>
+        ${session.topic ? `<p style="margin:4px 0">📋 <strong>Topic:</strong> ${session.topic}</p>` : ''}
+        <p style="margin:4px 0">🎤 <strong>Host:</strong> ${instructor?.name || 'TBD'}</p>
+        <p style="margin:4px 0">📅 <strong>Date & Time:</strong> ${formatDate(session.scheduledAt)}</p>
+        <p style="margin:4px 0">⏱️ <strong>Duration:</strong> ${session.durationMins || 60} minutes</p>
+        ${session.joinCode ? `<p style="margin:4px 0">🔑 <strong>Access Code:</strong> <span style="font-size:18px;letter-spacing:3px;font-weight:bold">${session.joinCode}</span></p>` : ''}
+      </div>
+
+      <div style="background:#f0fdf4;padding:14px;border-radius:8px;margin:16px 0;border-left:4px solid #22c55e">
+        <p style="margin:0 0 6px;font-weight:bold">🎧 What to Expect</p>
+        <ul style="margin:0;padding-left:20px;font-size:14px;color:#333">
+          <li><strong>Live discussion</strong> — engage with industry experts and thought leaders</li>
+          <li><strong>Q&A segment</strong> — get your questions answered during the interactive session</li>
+          <li><strong>Share your insights</strong> — contribute to the conversation in the chat or raise your hand</li>
+          <li><strong>Recording available</strong> — session may be recorded for later viewing</li>
+        </ul>
+      </div>
+
+      ${session.googleMeetUrl ? `
+        <div style="background:#e8f5e9;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #16a34a">
+          <p style="margin:0 0 8px;font-weight:bold">📹 Join the Live Podcast</p>
+          <p style="margin:0"><a href="${session.googleMeetUrl}" style="color:#1a56db;font-size:16px;font-weight:bold">${session.googleMeetUrl}</a></p>
+          <p style="margin:8px 0 0;font-size:13px;color:#666">Click to join the live broadcast at the scheduled time.</p>
+        </div>
+      ` : ''}
+
+      <p><a href="${process.env.FRONTEND_URL}/student/sessions"
+           style="display:inline-block;background:#10b981;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">
+        View Podcast Details
+      </a></p>
+      
+      <p style="color:#666;font-size:14px">We're looking forward to having you join the conversation! You'll receive a reminder 30 minutes before the session.</p>
     `),
   });
 

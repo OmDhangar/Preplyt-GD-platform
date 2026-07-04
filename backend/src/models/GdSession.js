@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { SESSION_STATUS } = require('../config/constants');
+const { SESSION_STATUS, SESSION_TYPES } = require('../config/constants');
 const crypto = require('crypto');
 
 const gdSessionSchema = new mongoose.Schema(
@@ -12,6 +12,13 @@ const gdSessionSchema = new mongoose.Schema(
     },
     description: { type: String, trim: true, default: '' },
     topic:       { type: String, trim: true, default: '' }, // GD topic/prompt
+
+    // Session type: gd | personal_interview | podcast
+    sessionType: {
+      type:    String,
+      enum:    Object.values(SESSION_TYPES),
+      default: SESSION_TYPES.GD,
+    },
 
     instructorId: {
       type:     mongoose.Schema.Types.ObjectId,
@@ -32,7 +39,7 @@ const gdSessionSchema = new mongoose.Schema(
     templateId: {
       type:     mongoose.Schema.Types.ObjectId,
       ref:      'EvaluationTemplate',
-      required: true,
+      required: function() { return this.sessionType !== 'podcast'; },
     },
     // Snapshot of template version used — avoids issues if template is edited later
     templateVersion: { type: Number, default: 1 },

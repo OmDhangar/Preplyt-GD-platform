@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Play,
+  Star,
   Square,
   Trash2,
   Copy,
@@ -78,6 +79,7 @@ function SessionDetail() {
   const [editTopic, setEditTopic] = useState("");
   const [editCoInstructors, setEditCoInstructors] = useState<string[]>([]);
   const [loadingEdit, setLoadingEdit] = useState(false);
+  const [editCoOpen, setEditCoOpen] = useState(false);
 
   const { data: instructors, isLoading: instructorsLoading } = useQuery({
     queryKey: ["users", "instructors", "verified"],
@@ -278,11 +280,13 @@ function SessionDetail() {
               ) : null}
               {session.status === "active" && (
                 <>
-                  <Button asChild className="bg-accent-teal hover:bg-accent-teal-bright">
-                    <Link to="/sessions/$id/evaluate" params={{ id }}>
-                      Evaluate
-                    </Link>
-                  </Button>
+                  {session.sessionType !== "podcast" && (
+                    <Button asChild className="bg-accent-teal hover:bg-accent-teal-bright">
+                      <Link to="/sessions/$id/evaluate" params={{ id }}>
+                        Evaluate
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={end} disabled={loadingEnd}>
                     <Square className="h-4 w-4 mr-1" /> {loadingEnd ? "Ending..." : "End"}
                   </Button>
@@ -290,16 +294,35 @@ function SessionDetail() {
               )}
               {session.status === "completed" && (
                 <>
-                  <Button asChild variant="outline">
-                    <Link to="/sessions/$id/evaluations" params={{ id }}>
-                      View evaluations
-                    </Link>
-                  </Button>
-                  <Button asChild className="bg-accent-teal hover:bg-accent-teal-bright">
-                    <Link to="/sessions/$id/evaluations/review" params={{ id }}>
-                      Review publish
-                    </Link>
-                  </Button>
+                  {session.sessionType !== "podcast" ? (
+                    <>
+                      <Button asChild variant="outline">
+                        <Link to="/sessions/$id/evaluations" params={{ id }}>
+                          View evaluations
+                        </Link>
+                      </Button>
+                      <Button asChild className="bg-accent-teal hover:bg-accent-teal-bright">
+                        <Link to="/sessions/$id/evaluations/review" params={{ id }}>
+                          Review publish
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          await apiPatch(`/sessions/${id}`, { status: 'published' });
+                          toast.success("Podcast published successfully!");
+                          reload();
+                        } catch (e) {
+                          toast.error(e instanceof ApiError ? e.message : "Failed to publish");
+                        }
+                      }}
+                      className="bg-accent-teal hover:bg-accent-teal-bright text-white"
+                    >
+                      Publish Podcast
+                    </Button>
+                  )}
                 </>
               )}
               {session.status === "draft" && (
@@ -376,6 +399,9 @@ function SessionDetail() {
             onEditClick={openEditModal}
           />
           <JoinCodePanel session={session} />
+          {role === "student" && !!session.joinCode && (session.status === "completed" || session.status === "published") && (
+            <StudentFeedbackPanel session={session} />
+          )}
           {session.googleMeetUrl && (
             <GoogleMeetPanel session={session} isStaff={isStaff} reload={reload} />
           )}
@@ -595,40 +621,62 @@ function SessionDetail() {
                 />
               </div>
 
-              <div>
+              <div 
+                className="relative"
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setEditCoOpen(false);
+                  }
+                }}
+              >
                 <Label>Co-Instructors (Optional)</Label>
-                {instructorsLoading ? (
-                  <div className="mt-2">
-                    <LoadingSection rows={2} />
-                  </div>
-                ) : (
-                  <div className="mt-2 border border-input rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
-                    {(instructors || [])
-                      .filter((inst) => inst._id !== (session?.instructorId?._id || session?.instructorId || user?._id))
-                      .map((inst) => {
-                        const checked = editCoInstructors.includes(inst._id);
-                        return (
-                          <div key={inst._id} className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              id={`edit-co-${inst._id}`}
-                              checked={checked}
-                              onChange={(e) => {
-                                const nextCo = e.target.checked
-                                  ? [...editCoInstructors, inst._id]
-                                  : editCoInstructors.filter((id) => id !== inst._id);
-                                setEditCoInstructors(nextCo);
-                              }}
-                              className="h-4 w-4 rounded border-gray-300 text-accent-teal focus:ring-accent-teal cursor-pointer accent-accent-teal"
-                            />
-                            <label htmlFor={`edit-co-${inst._id}`} className="text-sm text-text-on-light cursor-pointer select-none">
-                              {inst.name} ({inst.email})
-                            </label>
-                          </div>
-                        );
-                      })}
-                    {(instructors || []).filter((inst) => inst._id !== (session?.instructorId?._id || session?.instructorId || user?._id)).length === 0 && (
-                      <p className="text-xs text-text-muted-light">No other verified instructors available.</p>
+                <button
+                  type="button"
+                  onClick={() => setEditCoOpen(!editCoOpen)}
+                  className="w-full flex items-center justify-between mt-1 px-3 py-2 border rounded-lg bg-white text-sm text-left text-text-on-light focus:outline-none focus:ring-1 focus:ring-accent-teal"
+                >
+                  <span>
+                    {editCoInstructors.length === 0
+                      ? "Select co-instructors..."
+                      : `${editCoInstructors.length} selected`}
+                  </span>
+                  <span className="text-xs text-text-muted-light">▼</span>
+                </button>
+
+                {editCoOpen && (
+                  <div className="absolute z-30 left-0 right-0 mt-1 border border-input rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
+                    {instructorsLoading ? (
+                      <LoadingSection rows={2} />
+                    ) : (
+                      <>
+                        {(instructors || [])
+                          .filter((inst) => inst._id !== (session?.instructorId?._id || session?.instructorId || user?._id))
+                          .map((inst) => {
+                            const checked = editCoInstructors.includes(inst._id);
+                            return (
+                              <div key={inst._id} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  id={`edit-co-${inst._id}`}
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    const nextCo = e.target.checked
+                                      ? [...editCoInstructors, inst._id]
+                                      : editCoInstructors.filter((id) => id !== inst._id);
+                                    setEditCoInstructors(nextCo);
+                                  }}
+                                  className="h-4 w-4 rounded border-gray-300 text-accent-teal focus:ring-accent-teal cursor-pointer accent-accent-teal"
+                                />
+                                <label htmlFor={`edit-co-${inst._id}`} className="text-sm text-text-on-light cursor-pointer select-none">
+                                  {inst.name} ({inst.email})
+                                </label>
+                              </div>
+                            );
+                          })}
+                        {(instructors || []).filter((inst) => inst._id !== (session?.instructorId?._id || session?.instructorId || user?._id)).length === 0 && (
+                          <p className="text-xs text-text-muted-light">No other verified instructors available.</p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -1127,6 +1175,33 @@ function SessionInfoPanel({
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm text-left">
+        {/* Session Type Badge */}
+        <div>
+          <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Type</span>
+          <span className={`inline-block mt-1 px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider ${
+            session.sessionType === "personal_interview"
+              ? "bg-purple-100 text-purple-700"
+              : session.sessionType === "podcast"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-sky-100 text-sky-700"
+          }`}>
+            {session.sessionType === "personal_interview" ? "Personal Interview" : session.sessionType === "podcast" ? "Podcast" : "Group Discussion"}
+          </span>
+        </div>
+        {/* Seats */}
+        <div>
+          <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Seats</span>
+          <span className={`font-medium ${
+            session.maxParticipants && (session.participantCount ?? 0) >= session.maxParticipants
+              ? "text-red-600"
+              : "text-text-on-light"
+          }`}>
+            {session.participantCount ?? 0} / {session.maxParticipants ?? "∞"}
+            {session.maxParticipants && (session.participantCount ?? 0) >= session.maxParticipants && (
+              <span className="ml-2 px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded-full uppercase">Full</span>
+            )}
+          </span>
+        </div>
         <div>
           <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Scheduled At</span>
           <span className="font-medium text-text-on-light">
@@ -1281,6 +1356,132 @@ function AttachmentsPanel({
         <div className="text-xs text-text-muted-light py-6 text-center bg-slate-50 border border-dashed rounded-xl">
           No attachments uploaded for this session yet.
         </div>
+      )}
+    </section>
+  );
+}
+
+function StudentFeedbackPanel({ session }: { session: Session }) {
+  const { id } = Route.useParams();
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const { data: feedbackData, refetch } = useQuery({
+    queryKey: ["session", id, "my-feedback"],
+    queryFn: async () => (await apiGet<{ feedbacks: any[] }>(`/feedback/sessions/${id}/feedback`)).data,
+  });
+
+  const myFeedback = feedbackData?.feedbacks?.[0];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating === 0) {
+      toast.error("Please select a rating between 1 and 5 stars.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await apiPost(`/feedback/sessions/${id}/feedback`, { rating, comment });
+      toast.success("Thank you for your feedback!");
+      refetch();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to submit feedback");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="bg-white border rounded-2xl p-5 shadow-sm text-left space-y-4">
+      <h2 className="font-display font-semibold text-text-on-light flex items-center gap-2">
+        <Star className="h-5 w-5 text-amber-500 fill-amber-500" /> Session Feedback
+      </h2>
+
+      {myFeedback ? (
+        <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 space-y-2">
+          <p className="text-sm font-semibold text-emerald-800">
+            Thank you! Your feedback has been received.
+          </p>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star
+                key={s}
+                className={`h-4 w-4 ${
+                  s <= myFeedback.rating
+                    ? "text-amber-500 fill-amber-500"
+                    : "text-slate-200"
+                }`}
+              />
+            ))}
+            <span className="ml-1 text-xs text-text-muted-light font-medium">
+              (Rated {myFeedback.rating} / 5)
+            </span>
+          </div>
+          {myFeedback.comment && (
+            <p className="text-xs text-text-muted-dark italic bg-white border rounded-lg p-2.5 mt-1.5">
+              "{myFeedback.comment}"
+            </p>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-xs text-text-muted-light">
+            Share your thoughts to help us improve the PrepLyt session experience!
+          </p>
+
+          <div className="space-y-1.5">
+            <span className="text-xs text-text-muted-dark font-medium block">Rating</span>
+            <div className="flex items-center gap-1.5">
+              {[1, 2, 3, 4, 5].map((s) => {
+                const active = s <= (hoverRating || rating);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setRating(s)}
+                    onMouseEnter={() => setHoverRating(s)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-1 hover:scale-110 transition cursor-pointer"
+                  >
+                    <Star
+                      className={`h-7 w-7 transition-colors ${
+                        active
+                          ? "text-amber-500 fill-amber-500"
+                          : "text-slate-200"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="feedback-comment">Comments (Optional)</Label>
+            <Textarea
+              id="feedback-comment"
+              placeholder="What went well? What could be improved?"
+              maxLength={500}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="text-xs bg-slate-50 border-slate-200 focus:bg-white resize-none"
+              rows={3}
+            />
+            <div className="text-[10px] text-right text-text-muted-light">
+              {comment.length} / 500 characters
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full bg-accent-teal hover:bg-accent-teal-bright text-white text-xs py-2"
+          >
+            {submitting ? "Submitting..." : "Submit Feedback"}
+          </Button>
+        </form>
       )}
     </section>
   );

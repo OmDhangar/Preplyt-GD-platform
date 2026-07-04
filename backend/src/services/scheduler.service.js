@@ -101,6 +101,18 @@ const startScheduler = () => {
   });
 
   logger.info('[Scheduler] 30-minute reminder cron started (runs every 5 minutes)');
+
+  // ── Reservation cleanup — runs every minute ────────────────────────────────
+  const { cleanupAllExpiredReservations } = require('./reservation.service');
+  cron.schedule('* * * * *', async () => {
+    try {
+      await cleanupAllExpiredReservations();
+    } catch (err) {
+      logger.error(`[Scheduler] Reservation cleanup error: ${err.message}`);
+    }
+  });
+
+  logger.info('[Scheduler] Expired reservation cleanup cron started (runs every minute)');
 };
 
 module.exports = { startScheduler, runReminderJob };

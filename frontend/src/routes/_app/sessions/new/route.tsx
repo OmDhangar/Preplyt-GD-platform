@@ -49,6 +49,8 @@ function NewSession() {
     description: string;
     templateId: string;
     scheduledAt: string;
+    sessionType: string;
+    maxParticipants: number;
     requiresPayment: boolean;
     price: number;
     currency: string;
@@ -61,6 +63,8 @@ function NewSession() {
     description: "",
     templateId: "",
     scheduledAt: "",
+    sessionType: "gd",
+    maxParticipants: 15,
     requiresPayment: false,
     price: 0,
     currency: "INR",
@@ -70,19 +74,24 @@ function NewSession() {
     coInstructors: [],
   });
   const [loading, setLoading] = useState(false);
+  const [isCoOpen, setIsCoOpen] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const created = await apiPost<{ session: Session }>("/sessions", {
+      const payload = {
         ...form,
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
         googleMeetUrl: form.googleMeetUrl || undefined,
         price: form.requiresPayment ? Number(form.price) : undefined,
         autoCreateMeet: form.autoCreateMeet,
         instructorId: form.instructorId || undefined,
-      });
+      };
+      if (form.sessionType === "podcast") {
+        delete (payload as any).templateId;
+      }
+      const created = await apiPost<{ session: Session }>("/sessions", payload);
       toast.success("Session created");
       navigate({ to: "/sessions/$id", params: { id: created.session._id } });
     } catch (err) {
@@ -157,58 +166,123 @@ function NewSession() {
           <Textarea id="desc" value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </div>
+
+        {/* Session Type */}
         <div>
-          <Label>Template</Label>
-          {templatesLoading ? (
-            <div className="mt-2">
-              <LoadingSection rows={1} />
-            </div>
-          ) : (
-          <Select value={form.templateId}
-            onValueChange={(v) => setForm({ ...form, templateId: v })}>
-            <SelectTrigger><SelectValue placeholder="Choose a template" /></SelectTrigger>
+          <Label>Session Type</Label>
+          <Select
+            value={form.sessionType}
+            onValueChange={(v) => {
+              const defaults: Record<string, number> = { gd: 15, personal_interview: 4, podcast: 500 };
+              setForm({ ...form, sessionType: v, maxParticipants: defaults[v] ?? 15 });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
             <SelectContent>
-              {(templates || []).map((t) => (
-                <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
-              ))}
+              <SelectItem value="gd">Group Discussion (GD)</SelectItem>
+              <SelectItem value="personal_interview">Personal Interview (PI)</SelectItem>
+              <SelectItem value="podcast">Podcast</SelectItem>
             </SelectContent>
           </Select>
-          )}
         </div>
+
+        {/* Max Participants */}
         <div>
+          <Label htmlFor="maxParticipants">
+            Max Participants
+            <span className="ml-2 text-xs text-text-muted-light font-normal">
+              {form.sessionType === "gd" && "(default: 15)"}
+              {form.sessionType === "personal_interview" && "(default: 4)"}
+              {form.sessionType === "podcast" && "(default: 500)"}
+            </span>
+          </Label>
+          <Input
+            id="maxParticipants"
+            type="number"
+            min={1}
+            max={1000}
+            value={form.maxParticipants}
+            onChange={(e) => setForm({ ...form, maxParticipants: Number(e.target.value) })}
+          />
+        </div>
+        {form.sessionType !== "podcast" && (
+          <div>
+            <Label>Template</Label>
+            {templatesLoading ? (
+              <div className="mt-2">
+                <LoadingSection rows={1} />
+              </div>
+            ) : (
+            <Select value={form.templateId}
+              onValueChange={(v) => setForm({ ...form, templateId: v })}>
+              <SelectTrigger><SelectValue placeholder="Choose a template" /></SelectTrigger>
+              <SelectContent>
+                {(templates || []).map((t) => (
+                  <SelectItem key={t._id} value={t._id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            )}
+          </div>
+        )}
+        <div 
+          className="relative"
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setIsCoOpen(false);
+            }
+          }}
+        >
           <Label>Co-Instructors (Optional)</Label>
-          {instructorsLoading ? (
-            <div className="mt-2">
-              <LoadingSection rows={2} />
-            </div>
-          ) : (
-            <div className="mt-2 border border-input rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white">
-              {(instructors || [])
-                .filter((inst) => inst._id !== (form.instructorId || user?._id))
-                .map((inst) => {
-                  const checked = form.coInstructors.includes(inst._id);
-                  return (
-                    <div key={inst._id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={`co-${inst._id}`}
-                        checked={checked}
-                        onChange={(e) => {
-                          const nextCo = e.target.checked
-                            ? [...form.coInstructors, inst._id]
-                            : form.coInstructors.filter((id) => id !== inst._id);
-                          setForm({ ...form, coInstructors: nextCo });
-                        }}
-                        className="h-4 w-4 rounded border-gray-300 text-accent-teal focus:ring-accent-teal cursor-pointer accent-accent-teal"
-                      />
-                      <label htmlFor={`co-${inst._id}`} className="text-sm text-text-on-light cursor-pointer select-none">
-                        {inst.name} ({inst.email})
-                      </label>
-                    </div>
-                  );
-                })}
-              {(instructors || []).filter((inst) => inst._id !== (form.instructorId || user?._id)).length === 0 && (
-                <p className="text-xs text-text-muted-light">No other verified instructors available.</p>
+          <button
+            type="button"
+            onClick={() => setIsCoOpen(!isCoOpen)}
+            className="w-full flex items-center justify-between mt-1 px-3 py-2 border rounded-lg bg-white text-sm text-left text-text-on-light focus:outline-none focus:ring-1 focus:ring-accent-teal"
+          >
+            <span>
+              {form.coInstructors.length === 0
+                ? "Select co-instructors..."
+                : `${form.coInstructors.length} selected`}
+            </span>
+            <span className="text-xs text-text-muted-light">▼</span>
+          </button>
+
+          {isCoOpen && (
+            <div className="absolute z-30 left-0 right-0 mt-1 border border-input rounded-lg p-3 max-h-40 overflow-y-auto space-y-2 bg-white shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
+              {instructorsLoading ? (
+                <LoadingSection rows={2} />
+              ) : (
+                <>
+                  {(instructors || [])
+                    .filter((inst) => inst._id !== (form.instructorId || user?._id))
+                    .map((inst) => {
+                      const checked = form.coInstructors.includes(inst._id);
+                      return (
+                        <div key={inst._id} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`co-${inst._id}`}
+                            checked={checked}
+                            onChange={(e) => {
+                              const nextCo = e.target.checked
+                                ? [...form.coInstructors, inst._id]
+                                : form.coInstructors.filter((id) => id !== inst._id);
+                              setForm({ ...form, coInstructors: nextCo });
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-accent-teal focus:ring-accent-teal cursor-pointer accent-accent-teal"
+                          />
+                          <label htmlFor={`co-${inst._id}`} className="text-sm text-text-on-light cursor-pointer select-none">
+                            {inst.name} ({inst.email})
+                          </label>
+                        </div>
+                      );
+                    })}
+                  {(instructors || []).filter((inst) => inst._id !== (form.instructorId || user?._id)).length === 0 && (
+                    <p className="text-xs text-text-muted-light">No other verified instructors available.</p>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -60,6 +60,8 @@ export type SessionStatus =
   | "completed"
   | "published";
 
+export type SessionType = "gd" | "personal_interview" | "podcast";
+
 export interface Participant {
   _id?: string;
   userId: string;
@@ -85,6 +87,7 @@ export interface Session {
   title: string;
   description?: string;
   status: SessionStatus;
+  sessionType?: SessionType;
   templateId: string | Template;
   joinCode?: string;
   scheduledAt?: string;
@@ -97,6 +100,7 @@ export interface Session {
   googleMeetUrl?: string;
   participants?: Participant[];
   participantCount?: number;
+  maxParticipants?: number;
   evaluatedCount?: number;
   sessionFee?: {
     amount: number;

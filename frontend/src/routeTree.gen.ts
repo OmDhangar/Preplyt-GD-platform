@@ -31,6 +31,7 @@ import { Route as AppResultsSessionIdRouteRouteImport } from './routes/_app/resu
 import { Route as AppAdminInstructorsRouteRouteImport } from './routes/_app/admin/instructors/route'
 import { Route as AppAdminInstructorGdsRouteRouteImport } from './routes/_app/admin/instructor-gds/route'
 import { Route as AppAdminB2bRequestsRouteRouteImport } from './routes/_app/admin/b2b-requests/route'
+import { Route as AppAdminAnalyticsRouteRouteImport } from './routes/_app/admin/analytics/route'
 import { Route as AppTemplatesIndexRouteRouteImport } from './routes/_app/templates/index/route'
 import { Route as AppSessionsIndexRouteRouteImport } from './routes/_app/sessions/index/route'
 import { Route as AppSessionsJoinCodeRouteRouteImport } from './routes/_app/sessions/join/$code/route'
@@ -154,6 +155,11 @@ const AppAdminB2bRequestsRouteRoute =
     path: '/admin/b2b-requests',
     getParentRoute: () => AppRoute,
   } as any)
+const AppAdminAnalyticsRouteRoute = AppAdminAnalyticsRouteRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTemplatesIndexRouteRoute = AppTemplatesIndexRouteRouteImport.update({
   id: '/templates/',
   path: '/templates',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRouteRoute
   '/sessions/': typeof AppSessionsIndexRouteRoute
   '/templates/': typeof AppTemplatesIndexRouteRoute
+  '/admin/analytics': typeof AppAdminAnalyticsRouteRoute
   '/admin/b2b-requests': typeof AppAdminB2bRequestsRouteRoute
   '/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
   '/admin/instructors': typeof AppAdminInstructorsRouteRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRouteRoute
   '/sessions': typeof AppSessionsIndexRouteRoute
   '/templates': typeof AppTemplatesIndexRouteRoute
+  '/admin/analytics': typeof AppAdminAnalyticsRouteRoute
   '/admin/b2b-requests': typeof AppAdminB2bRequestsRouteRoute
   '/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
   '/admin/instructors': typeof AppAdminInstructorsRouteRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRouteRoute
   '/_app/sessions/': typeof AppSessionsIndexRouteRoute
   '/_app/templates/': typeof AppTemplatesIndexRouteRoute
+  '/_app/admin/analytics': typeof AppAdminAnalyticsRouteRoute
   '/_app/admin/b2b-requests': typeof AppAdminB2bRequestsRouteRoute
   '/_app/admin/instructor-gds': typeof AppAdminInstructorGdsRouteRoute
   '/_app/admin/instructors': typeof AppAdminInstructorsRouteRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/sessions/'
     | '/templates/'
+    | '/admin/analytics'
     | '/admin/b2b-requests'
     | '/admin/instructor-gds'
     | '/admin/instructors'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/sessions'
     | '/templates'
+    | '/admin/analytics'
     | '/admin/b2b-requests'
     | '/admin/instructor-gds'
     | '/admin/instructors'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/_app/sessions/'
     | '/_app/templates/'
+    | '/_app/admin/analytics'
     | '/_app/admin/b2b-requests'
     | '/_app/admin/instructor-gds'
     | '/_app/admin/instructors'
@@ -560,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminB2bRequestsRouteRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin/analytics': {
+      id: '/_app/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AppAdminAnalyticsRouteRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/templates/': {
       id: '/_app/templates/'
       path: '/templates'
@@ -646,6 +665,7 @@ interface AppRouteChildren {
   AppProfileRouteRoute: typeof AppProfileRouteRoute
   AppSessionsIndexRouteRoute: typeof AppSessionsIndexRouteRoute
   AppTemplatesIndexRouteRoute: typeof AppTemplatesIndexRouteRoute
+  AppAdminAnalyticsRouteRoute: typeof AppAdminAnalyticsRouteRoute
   AppAdminB2bRequestsRouteRoute: typeof AppAdminB2bRequestsRouteRoute
   AppAdminInstructorGdsRouteRoute: typeof AppAdminInstructorGdsRouteRoute
   AppAdminInstructorsRouteRoute: typeof AppAdminInstructorsRouteRoute
@@ -663,6 +683,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRouteRoute: AppProfileRouteRoute,
   AppSessionsIndexRouteRoute: AppSessionsIndexRouteRoute,
   AppTemplatesIndexRouteRoute: AppTemplatesIndexRouteRoute,
+  AppAdminAnalyticsRouteRoute: AppAdminAnalyticsRouteRoute,
   AppAdminB2bRequestsRouteRoute: AppAdminB2bRequestsRouteRoute,
   AppAdminInstructorGdsRouteRoute: AppAdminInstructorGdsRouteRoute,
   AppAdminInstructorsRouteRoute: AppAdminInstructorsRouteRoute,

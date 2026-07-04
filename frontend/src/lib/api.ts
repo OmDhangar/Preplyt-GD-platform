@@ -54,7 +54,7 @@ const flushQueue = (err: unknown, token: string | null) => {
 const hardLogout = () => {
   useAuthStore.getState().clear();
   if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth")) {
-    window.location.href = "/auth/login";
+    window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
   }
 };
 

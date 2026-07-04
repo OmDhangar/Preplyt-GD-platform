@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,16 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth/register")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
+  }),
   component: RegisterPage,
 });
 
 function RegisterPage() {
   const { register, loginGoogle, logout } = useAuth();
   const navigate = useNavigate();
+  const { redirect } = useSearch({ from: "/auth/register" });
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -81,7 +85,7 @@ function RegisterPage() {
           toast.error(`This Google account is registered as a ${user.role}. Please register or switch roles.`);
         } else {
           toast.success("Account created & Google Sign In successful");
-          navigate({ to: "/dashboard" });
+          navigate({ to: redirect || "/dashboard" });
         }
       } catch (err) {
         toast.error(err instanceof ApiError ? err.message : "Google registration failed");
@@ -93,7 +97,7 @@ function RegisterPage() {
     return () => {
       delete (window as any).onGoogleCredential;
     };
-  }, [loginGoogle, logout, navigate]);
+  }, [loginGoogle, logout, navigate, redirect]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +105,7 @@ function RegisterPage() {
     try {
       await register({ name, email, password, role });
       toast.success("Account created");
-      navigate({ to: "/dashboard" });
+      navigate({ to: redirect || "/dashboard" });
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Registration failed");
     } finally {
@@ -166,7 +170,7 @@ function RegisterPage() {
         toast.error(`This Google account is registered as a ${user.role}. Please register or switch roles.`);
       } else {
         toast.success("Account created & Google Sign In successful");
-        navigate({ to: "/dashboard" });
+        navigate({ to: redirect || "/dashboard" });
       }
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Google registration failed");
@@ -267,7 +271,7 @@ function RegisterPage() {
 
       <div className="text-center text-xs text-text-muted-dark pt-6 mt-2 border-t border-white/5">
         Already have an account?{" "}
-        <Link to="/auth/login" className="text-accent-teal hover:underline transition">
+        <Link to="/auth/login" search={{ redirect }} className="text-accent-teal hover:underline transition">
           Sign in
         </Link>
       </div>

@@ -6,6 +6,7 @@ const createSessionRules = [
     .notEmpty().withMessage('Session title is required')
     .isLength({ max: 200 }).withMessage('Title cannot exceed 200 characters'),
   body('templateId')
+    .if(body('sessionType').not().equals('podcast'))
     .notEmpty().withMessage('Template ID is required')
     .isMongoId().withMessage('Invalid template ID'),
   body('scheduledAt')
@@ -16,7 +17,10 @@ const createSessionRules = [
     .isInt({ min: 1, max: 480 }).withMessage('Duration must be between 1 and 480 minutes'),
   body('maxParticipants')
     .optional()
-    .isInt({ min: 1, max: 500 }).withMessage('maxParticipants must be between 1 and 500'),
+    .isInt({ min: 1, max: 1000 }).withMessage('maxParticipants must be between 1 and 1000'),
+  body('sessionType')
+    .optional()
+    .isIn(['gd', 'personal_interview', 'podcast']).withMessage('sessionType must be gd, personal_interview, or podcast'),
   body('requiresPayment')
     .optional()
     .isBoolean().withMessage('requiresPayment must be boolean'),

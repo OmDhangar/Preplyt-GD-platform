@@ -7,11 +7,14 @@ import { AlertCircle, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/_app")({
   ssr: false,
-  beforeLoad: () => {
+  beforeLoad: ({ location }) => {
     if (typeof window === "undefined") return;
     const { accessToken } = useAuthStore.getState();
     if (!accessToken) {
-      throw redirect({ to: "/auth/login" });
+      throw redirect({
+        to: "/auth/login",
+        search: { redirect: location.href },
+      });
     }
   },
   component: AppShell,

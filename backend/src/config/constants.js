@@ -20,9 +20,16 @@ const EVALUATION_STATUS = Object.freeze({
   PUBLISHED: 'published',
 });
 
+const SESSION_TYPES = Object.freeze({
+  GD:                 'gd',
+  PERSONAL_INTERVIEW: 'personal_interview',
+  PODCAST:            'podcast',
+});
+
 const PARTICIPANT_STATUS = Object.freeze({
   INVITED:    'invited',
   REGISTERED: 'registered',
+  RESERVED:   'reserved',
   ATTENDED:   'attended',
   ABSENT:     'absent',
   REMOVED:    'removed',
@@ -133,6 +140,7 @@ const SOCKET_EVENTS = Object.freeze({
 module.exports = {
   ROLES,
   SESSION_STATUS,
+  SESSION_TYPES,
   EVALUATION_STATUS,
   PARTICIPANT_STATUS,
   PAYMENT_STATUS,
