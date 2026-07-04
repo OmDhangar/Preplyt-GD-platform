@@ -112,15 +112,15 @@ function SessionsList() {
         {loading ? (
           <div className="text-text-muted-light">Loading sessions…</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {(list || []).map((s) => (
               <div
                 key={s._id}
-                className="bg-white border rounded-2xl p-5 flex flex-col justify-between hover:border-accent-teal/40 transition shadow-elegant"
+                className="bg-white border rounded-2xl p-4 flex flex-col justify-between hover:border-accent-teal/40 transition shadow-elegant"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display font-semibold text-lg line-clamp-1">
+                    <h3 className="font-display font-semibold text-base line-clamp-1">
                       {s.title}
                     </h3>
                     <CornerPillBadge tone={statusTone[s.status] || "dark"}>
@@ -248,18 +248,18 @@ function SessionsList() {
       {instructorLoading ? (
         <div className="text-text-muted-light">Loading dashboard…</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {(instructorSessions || []).map((s) => (
             <Link
               key={s._id}
               to="/sessions/$id"
               params={{ id: s._id }}
-              className="bg-white border rounded-2xl p-5 hover:border-accent-teal/40 transition shadow-elegant flex flex-col justify-between"
+              className="bg-white border rounded-2xl p-4 hover:border-accent-teal/40 transition shadow-elegant flex flex-col justify-between"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-display font-semibold text-lg line-clamp-2">
+                    <h3 className="font-display font-semibold text-base line-clamp-2">
                       {s.title}
                     </h3>
                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${

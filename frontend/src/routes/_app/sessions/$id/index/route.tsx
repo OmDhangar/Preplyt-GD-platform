@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { IconCircle } from "@/components/brand/IconCircle";
+import { cn } from "@/lib/utils";
 
 import { toast } from "sonner";
 import { useState } from "react";
@@ -336,24 +337,30 @@ function SessionDetail() {
         }
       />
 
-      <section className="bg-surface-light border border-hairline-light rounded-2xl p-6 mb-6 shadow-elegant">
-        <h2 className="font-display text-lg font-semibold mb-5">Lifecycle</h2>
-        <div className="flex items-center flex-wrap gap-2">
+      <section className="bg-surface-light border border-hairline-light rounded-2xl p-3.5 mb-4 shadow-elegant text-left">
+        <h2 className="font-display text-[10px] font-bold uppercase tracking-wider text-text-muted-light mb-2.5">Lifecycle</h2>
+        <div className="flex items-center justify-between w-full gap-0.5 py-0.5 select-none">
           {lifecycle.map((step, i) => {
             const done = i < currentStep;
             const active = i === currentStep;
             return (
-              <div key={step.key} className="flex items-center">
-                <div className="flex flex-col items-center min-w-[96px]">
-                  <IconCircle
-                    step={i + 1}
-                    tone={done || active ? "teal" : "dark"}
+              <div key={step.key} className="flex items-center flex-1 last:flex-initial">
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={cn(
+                      "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all shrink-0 select-none",
+                      active
+                        ? "bg-gradient-teal text-white shadow-glow-teal ring-1 ring-white/10 font-extrabold scale-105"
+                        : done
+                          ? "bg-accent-teal text-white ring-1 ring-white/10"
+                          : "bg-surface-dark text-text-muted-dark border border-white/5"
+                    )}
                   >
-                    <span className="text-xs font-bold">{step.label[0]}</span>
-                  </IconCircle>
+                    {step.label[0]}
+                  </div>
                   <div
                     className={
-                      "text-[11px] mt-2 font-medium uppercase tracking-wider " +
+                      "text-[8px] mt-1 font-semibold uppercase tracking-wider truncate max-w-[40px] sm:max-w-none text-center " +
                       (active
                         ? "text-accent-teal"
                         : done
@@ -367,10 +374,10 @@ function SessionDetail() {
                 {i < lifecycle.length - 1 && (
                   <div
                     className={
-                      "hidden md:block h-[2px] w-10 rounded-full mx-1 transition-all " +
+                      "h-[1.5px] flex-1 min-w-[6px] sm:min-w-[20px] rounded-full mx-0.5 transition-all " +
                       (done
-                        ? "bg-gradient-teal shadow-[0_0_8px_rgba(20,184,166,0.5)]"
-                        : "bg-hairline-light")
+                        ? "bg-accent-teal"
+                        : "bg-surface-dark")
                     }
                   />
                 )}
@@ -1065,10 +1072,10 @@ function ParticipantsPanel({
   };
 
   return (
-    <section className="bg-white border rounded-2xl p-5">
+    <section className="bg-white border rounded-2xl p-5 shadow-sm text-left">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold flex items-center gap-2">
-          <UsersIcon className="h-4 w-4" /> Participants
+        <h2 className="font-display font-semibold flex items-center gap-2 text-text-on-light">
+          <UsersIcon className="h-4 w-4 text-accent-teal" /> Participants
         </h2>
         {canManage && data && data.length > 0 && (
           <Button
@@ -1081,42 +1088,59 @@ function ParticipantsPanel({
           </Button>
         )}
       </div>
-      <ul className="divide-y mb-4">
-        {(data || []).map((p) => (
-          <li key={p.userId} className="py-2 flex items-center justify-between text-sm">
-            <div>
-              <div className="font-medium">{p.name || p.userId}</div>
-              <div className="text-xs text-text-muted-light">{p.email}</div>
-            </div>
-            {p.paymentStatus && p.paymentStatus !== "not_required" && (
-              <CornerPillBadge tone={p.paymentStatus === "paid" ? "teal" : "amber"}>
-                {p.paymentStatus}
-              </CornerPillBadge>
+
+      {canManage ? (
+        <>
+          <ul className="divide-y mb-4">
+            {(data || []).map((p) => (
+              <li key={p.userId} className="py-2 flex items-center justify-between text-sm">
+                <div>
+                  <div className="font-medium text-text-on-light">{p.name || p.userId}</div>
+                  <div className="text-xs text-text-muted-light">{p.email}</div>
+                </div>
+                {p.paymentStatus && p.paymentStatus !== "not_required" && (
+                  <CornerPillBadge tone={p.paymentStatus === "paid" ? "teal" : "amber"}>
+                    {p.paymentStatus}
+                  </CornerPillBadge>
+                )}
+              </li>
+            ))}
+            {!data?.length && (
+              <li className="py-3 text-sm text-text-muted-light">No participants yet.</li>
             )}
-          </li>
-        ))}
-        {!data?.length && (
-          <li className="py-3 text-sm text-text-muted-light">No participants yet.</li>
-        )}
-      </ul>
-      {canManage && (
-        <div className="relative">
-          <Input placeholder="Search users by name or email…"
-            value={email} onChange={(e) => search(e.target.value)} />
-          {!!results.length && (
-            <div className="absolute z-10 bg-white border rounded-lg w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
-              {results.map((u) => (
-                <button key={u._id} onClick={() => add(u._id)}
-                  disabled={addingUserId === u._id}
-                  className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-light">
-                  <div className="font-medium">{u.name}</div>
-                  <div className="text-xs text-text-muted-light">
-                    {addingUserId === u._id ? "Adding..." : u.email}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          </ul>
+          <div className="relative">
+            <Input placeholder="Search users by name or email…"
+              value={email} onChange={(e) => search(e.target.value)} />
+            {!!results.length && (
+              <div className="absolute z-10 bg-white border rounded-lg w-full mt-1 max-h-60 overflow-y-auto shadow-lg">
+                {results.map((u) => (
+                  <button key={u._id} onClick={() => add(u._id)}
+                    disabled={addingUserId === u._id}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-light">
+                    <div className="font-medium">{u.name}</div>
+                    <div className="text-xs text-text-muted-light">
+                      {addingUserId === u._id ? "Adding..." : u.email}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="py-6 text-center space-y-4 bg-slate-50 border border-dashed rounded-xl p-4">
+          <div className="mx-auto w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center text-accent-teal">
+            <UsersIcon className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-base font-bold text-text-on-light">
+              {data?.length || 0} Participant{data?.length === 1 ? "" : "s"} Joined
+            </h4>
+            <p className="text-xs text-text-muted-light max-w-xs mx-auto leading-relaxed">
+              Practice live group discussions, debates, and receive instant grading rubrics alongside other aspirants!
+            </p>
+          </div>
         </div>
       )}
     </section>
@@ -1220,7 +1244,8 @@ function SessionInfoPanel({
           <div className="col-span-2 border-t border-hairline-light pt-3">
             <span className="text-xs text-text-muted-light font-semibold block uppercase tracking-wider">Instructor</span>
             <span className="font-medium text-text-on-light">
-              {session.instructorId.name} ({session.instructorId.email})
+              {session.instructorId.name}
+              {isStaff && ` (${session.instructorId.email})`}
             </span>
           </div>
         )}
@@ -1230,7 +1255,8 @@ function SessionInfoPanel({
             <div className="flex flex-col gap-1 mt-1">
               {session.coInstructors.map((co: any) => (
                 <span key={co._id} className="font-medium text-text-on-light text-sm">
-                  {co.name} ({co.email})
+                  {co.name}
+                  {isStaff && ` (${co.email})`}
                 </span>
               ))}
             </div>

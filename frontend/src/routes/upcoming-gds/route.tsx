@@ -5,6 +5,7 @@ import { apiGet } from "@/lib/api";
 import type { Session } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
+import { useState } from "react";
 import {
   Calendar,
   Clock,
@@ -13,16 +14,37 @@ import {
   Tag,
   CreditCard,
   ChevronLeft,
+  Menu,
+  X,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export const Route = createFileRoute("/upcoming-gds")({
   ssr: false,
   component: PublicUpcomingGdsPage,
 });
 
+const getInitials = (name: string) => {
+  if (!name) return "";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 function PublicUpcomingGdsPage() {
+  const { user, logout } = useAuth();
   const { accessToken } = useAuthStore();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate({ to: "/auth/login" });
+  };
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ["public-upcoming-sessions"],
@@ -46,39 +68,106 @@ function PublicUpcomingGdsPage() {
   return (
     <div className="min-h-screen bg-bg-dark text-text-on-dark selection:bg-accent-teal/30 select-none flex flex-col justify-between">
       {/* ─── Header ─── */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-bg-dark/80 border-b border-white/5 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="h-10 w-10 rounded-xl bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal">
-              PL
-            </div>
-            <span className="font-display text-xl font-bold tracking-tight text-white">
-              Prep<span className="text-gradient-teal font-extrabold">Lyt</span>
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
-            <Link to="/" className="hover:text-white transition">Home</Link>
+      <header className="sticky top-0 z-50 bg-bg-dark md:bg-bg-dark/90 md:backdrop-blur-xl text-text-on-dark border-b border-hairline-dark transition-all">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden p-2 -ml-2 rounded-lg text-text-muted-dark hover:text-text-on-dark hover:bg-surface-dark transition cursor-pointer"
+              title="Toggle menu"
+              aria-label="Toggle menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="h-9 w-9 rounded-full bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal shrink-0">
+                PL
+              </div>
+              <span className="hidden sm:inline-block font-display text-lg tracking-tight">
+                Preplyt <span className="text-gradient-teal font-semibold">PL</span>
+              </span>
+            </Link>
+          </div>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-text-muted-dark">
+            <Link to="/" className="hover:text-text-on-dark transition">Home</Link>
             <Link to="/upcoming-gds" className="text-accent-teal font-semibold transition">Upcoming GDs</Link>
-            <Link to="/about-us" className="hover:text-white transition">About Us</Link>
-            <a href="/#how-it-works" className="hover:text-white transition">How it works</a>
-            <a href="/#mentors" className="hover:text-white transition">Meet Mentors</a>
+            <Link to="/about-us" className="hover:text-text-on-dark transition">About Us</Link>
+            <a href="/#how-it-works" className="hover:text-text-on-dark transition">How it works</a>
+            <a href="/#mentors" className="hover:text-text-on-dark transition">Meet Mentors</a>
           </nav>
-          <div>
-            {accessToken ? (
-              <Link to="/dashboard">
-                <Button className="bg-accent-teal hover:bg-accent-teal-bright text-white shadow-glow-teal px-5 py-5 text-sm font-medium">
-                  Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                {user.role && (
+                  <CornerPillBadge tone="teal" className="hidden sm:inline-flex">{user.role}</CornerPillBadge>
+                )}
+                <NotificationBell />
+                <Link
+                  to="/dashboard"
+                  className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center border border-hairline-dark bg-surface-dark hover:border-accent-teal transition cursor-pointer shrink-0"
+                  title="Dashboard"
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="text-xs font-bold text-text-on-dark font-display">
+                      {getInitials(user.name)}
+                    </span>
+                  )}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg text-text-muted-dark hover:text-text-on-dark hover:bg-surface-dark transition cursor-pointer"
+                  title="Log out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </>
             ) : (
               <Link to="/auth/login">
-                <Button variant="outline" className="border-white/10 hover:border-white/20 text-white bg-white/5 hover:bg-white/10 px-5 py-5 text-sm font-medium">
-                  Login / Register
+                <Button variant="outline" className="border-white/10 hover:border-white/20 text-white bg-white/5 hover:bg-white/10 px-3 py-3 sm:px-5 sm:py-5 text-sm font-medium flex items-center justify-center gap-2">
+                  <span className="hidden sm:inline">Login / Register</span>
+                  <LogIn className="h-4 w-4 shrink-0 sm:hidden" />
                 </Button>
               </Link>
             )}
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {menuOpen && (
+          <div className="fixed inset-0 z-50 flex justify-end md:hidden">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMenuOpen(false)}
+            />
+            {/* Drawer */}
+            <div className="relative w-64 max-w-xs bg-bg-dark h-full p-6 border-l border-hairline-dark flex flex-col gap-6 text-left shadow-2xl animate-in slide-in-from-right duration-200">
+              <div className="flex items-center justify-between">
+                <span className="font-display font-bold text-white text-lg">Menu</span>
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="p-1 rounded-lg text-text-muted-dark hover:text-text-on-dark hover:bg-surface-dark cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <nav className="flex flex-col gap-4 text-base font-medium text-text-muted-dark">
+                <Link to="/" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">Home</Link>
+                <Link to="/upcoming-gds" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">Upcoming GDs</Link>
+                <Link to="/about-us" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">About Us</Link>
+                <a href="/#how-it-works" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">How it works</a>
+                <a href="/#mentors" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">Meet Mentors</a>
+              </nav>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ─── Main Content ─── */}
@@ -118,13 +207,12 @@ function PublicUpcomingGdsPage() {
               >
                 <div className="space-y-4 text-left">
                   <div className="flex items-start justify-between gap-2">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      s.status === "active"
-                        ? "bg-accent-teal/10 text-accent-teal"
-                        : s.status === "completed"
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${s.status === "active"
+                      ? "bg-accent-teal/10 text-accent-teal"
+                      : s.status === "completed"
                         ? "bg-white/10 text-text-muted-dark"
                         : "bg-amber-500/10 text-amber-500"
-                    }`}>
+                      }`}>
                       {s.status === "active" ? "LIVE NOW" : s.status === "completed" ? "Completed" : "Upcoming"}
                     </span>
                     <CornerPillBadge tone={s.requiresPayment ? "amber" : "teal"}>

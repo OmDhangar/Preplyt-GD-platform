@@ -55,12 +55,12 @@ export function PageHeader({
           </button>
         </div>
       )}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1
               className={cn(
-                "font-display font-bold text-3xl md:text-4xl",
+                "font-display font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words",
                 variant === "light" ? "text-text-on-light" : "text-text-on-dark",
               )}
             >
@@ -69,10 +69,10 @@ export function PageHeader({
             {pill}
           </div>
           {subtitle && (
-            <p className="italic text-accent-teal mt-1 text-base">{subtitle}</p>
+            <p className="italic text-accent-teal mt-1 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-none">{subtitle}</p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
       </div>
     </div>
   );

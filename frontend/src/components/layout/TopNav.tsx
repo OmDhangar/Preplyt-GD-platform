@@ -15,7 +15,15 @@ const getInitials = (name: string) => {
 export function TopNav() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { toggleCollapsed } = useSidebarStore();
+  const { toggleCollapsed, toggleMobile } = useSidebarStore();
+
+  const handleMenuClick = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      toggleMobile();
+    } else {
+      toggleCollapsed();
+    }
+  };
 
   const onLogout = async () => {
     await logout();
@@ -28,7 +36,7 @@ export function TopNav() {
         <div className="flex items-center gap-2">
           {user && (
             <button
-              onClick={toggleCollapsed}
+              onClick={handleMenuClick}
               className="p-2 -ml-2 rounded-lg text-text-muted-dark hover:text-text-on-dark hover:bg-surface-dark transition cursor-pointer"
               title="Toggle menu"
               aria-label="Toggle menu"
@@ -38,10 +46,10 @@ export function TopNav() {
           )}
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="h-9 w-9 rounded-full bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal shrink-0">
-              GD
+              PL
             </div>
             <span className="hidden sm:inline-block font-display text-lg tracking-tight">
-              Preplyt <span className="text-gradient-teal font-semibold">GD</span>
+              Preplyt <span className="text-gradient-teal font-semibold">PL</span>
             </span>
           </Link>
         </div>
