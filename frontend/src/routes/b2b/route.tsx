@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/layout/NotificationBell";
@@ -49,6 +50,11 @@ function B2bPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  const toggleFaq = (index: number) => {
+    setActiveFaq(activeFaq === index ? null : index);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -123,7 +129,7 @@ function B2bPage() {
             <Link to="/about-us" className="hover:text-text-on-dark transition">About Us</Link>
             <a href="/#how-it-works" className="hover:text-text-on-dark transition">How it works</a>
             <a href="/#mentors" className="hover:text-text-on-dark transition">Meet Mentors</a>
-            <a href="/#faq" className="hover:text-text-on-dark transition">FAQ</a>
+            <a href="#faq" className="hover:text-text-on-dark transition">FAQ</a>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
@@ -194,7 +200,7 @@ function B2bPage() {
                 <Link to="/about-us" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">About Us</Link>
                 <a href="/#how-it-works" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">How it works</a>
                 <a href="/#mentors" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">Meet Mentors</a>
-                <a href="/#faq" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">FAQ</a>
+                <a href="#faq" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">FAQ</a>
               </nav>
             </div>
           </div>
@@ -215,7 +221,7 @@ function B2bPage() {
 
           <h1 className="font-display text-4xl sm:text-6xl font-bold text-white tracking-tight leading-[1.1] max-w-4xl">
             Help your students crack GDs & PIs<br />
-            <span className="text-gradient-teal font-extrabold">&mdash; before placement season.</span>
+            <span className="text-gradient-teal font-extrabold"> before placement season.</span>
           </h1>
 
           <p className="text-base sm:text-lg text-text-muted-dark max-w-2xl leading-relaxed">
@@ -475,6 +481,75 @@ function B2bPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ Section ─── */}
+      <section id="faq" className="py-20 bg-surface-dark/20 border-t border-white/5">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-teal/10 border border-accent-teal/20 text-accent-teal text-xs font-semibold uppercase tracking-wider">
+              FAQ
+            </div>
+            <h2 className="font-display text-3xl font-bold text-white">Frequently Asked Questions</h2>
+            <p className="text-text-muted-dark">Everything institutions need to know about Preplyt.</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Who are your mentors and what are their qualifications?",
+                a: "Our mentors are hiring managers and senior professionals actively working at companies like Cummins, Infosys, Accenture, Mercedes and Samsung. Many of them have directly interviewed and hired candidates from engineering and MBA colleges."
+              },
+              {
+                q: "How is Preplyt different from the placement training we already provide?",
+                a: "Most placement training gives students generic advice on what to do. Preplyt gives every student individual feedback on exactly what they personally need to fix, delivered during the session itself by someone who actually hires in their industry."
+              },
+              {
+                q: "What does a typical session look like?",
+                a: "For Group Discussions, 10 students are given a topic and assessed on communication, content, and group dynamics. Each student receives individual verbal feedback during the session. For Personal Interviews, one student is assessed in a one on one mock interview format with detailed feedback on presentation, confidence, and response quality."
+              },
+              {
+                q: "What is the pricing for institutions?",
+                a: "Pricing depends on your batch size and specific requirements. Book a call with our founder and we can discuss the details and find the right plan for your institution."
+              },
+              {
+                q: "Do students receive any feedback report after the session?",
+                a: "Yes. Every student receives individual written feedback after the session in addition to verbal feedback during the session itself. This helps students track their progress across multiple sessions."
+              },
+              {
+                q: "How do we get started?",
+                a: "Simply book a short call with our founder. We will understand your batch size, timeline, and placement requirements and schedule your free pilot session within the week."
+              },
+              {
+                q: "Can sessions be conducted online?",
+                a: "Yes. All sessions are conducted live online making it accessible for colleges across Maharashtra and beyond without any logistical overhead."
+              },
+              {
+                q: "How do you ensure consistent quality across mentors?",
+                a: "All mentors are vetted through a selection process and are currently active professionals in their respective industries. Sessions are monitored for quality and student ratings are collected after every session maintaining our current average of 4.8 out of 5."
+              },
+              {
+                q: "What if we want to track student progress over multiple sessions?",
+                a: "Our platform includes progress tracking for each student across sessions so TPOs can monitor improvement and identify students who need additional support before placement season."
+              }
+            ].map((faq, index) => (
+              <div key={index} className="bg-surface-dark/40 border border-white/5 rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => toggleFaq(index)}
+                  className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-medium text-white hover:bg-white/5 transition"
+                >
+                  <span>{faq.q}</span>
+                  <ChevronDown className={`h-4 w-4 text-text-muted-dark transition-transform ${activeFaq === index ? "rotate-180 text-accent-teal" : ""}`} />
+                </button>
+                {activeFaq === index && (
+                  <div className="px-6 pb-6 text-sm text-text-muted-dark leading-relaxed animate-fade-in">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>

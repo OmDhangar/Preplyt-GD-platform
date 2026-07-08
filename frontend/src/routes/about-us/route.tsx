@@ -51,25 +51,25 @@ function AboutUsPage() {
     {
       name: "Raj Girase",
       role: "CEO",
-      avatar: "https://preplyt.com/wp-content/uploads/2026/03/WhatsApp-Image-2026-02-04-at-15.16.01.jpg-1.jpeg",
+      avatar: "/team/raj.jpg",
       bullets: ["Strategy & leadership", "Finance", "Execution"],
     },
     {
       name: "Kulvansh Rajput",
       role: "CTO",
-      avatar: "https://preplyt.com/wp-content/uploads/2026/03/KULVANSH-RAJPUT_b215-scaled.jpg",
+      avatar: "/team/kulvansh.jpg",
       bullets: ["Platform development", "Technology integration", "Maintenance & scaling"],
     },
     {
       name: "Sneha",
       role: "CMO",
-      avatar: "https://preplyt.com/wp-content/uploads/2026/03/Gemini_Generated_Image_7pbygi7pbygi7pby-1.png",
+      avatar: "/team/sneha.jpg",
       bullets: ["Marketing strategy", "Brand growth", "Onboarding"],
     },
     {
       name: "Manas",
       role: "Operations",
-      avatar: "https://preplyt.com/wp-content/uploads/2026/03/WhatsApp-Image-2026-03-28-at-1.53.04-PM.jpeg",
+      avatar: "/team/manas.jpg",
       bullets: ["Daily operations", "Session management", "Coordination"],
     },
   ];
