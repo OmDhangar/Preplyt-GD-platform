@@ -84,6 +84,7 @@ const gdSessionSchema = new mongoose.Schema(
 
     tags: [{ type: String, trim: true }],
     googleMeetUrl: { type: String, trim: true, default: '' },
+    posterUrl: { type: String, trim: true, default: '' },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
     // ── Attachments for subscribed students ──────────────────────────────────

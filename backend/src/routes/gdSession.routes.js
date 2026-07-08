@@ -5,6 +5,7 @@ const { restrictTo }        = require('../middleware/roles');
 const { requireVerified }   = require('../middleware/instructorVerified');
 const validate              = require('../middleware/validate');
 const upload                = require('../middleware/upload');
+const posterUpload          = require('../middleware/posterUpload');
 const {
   createSessionRules, updateSessionRules,
   sessionIdParam, assignStudentsRules, rescheduleSessionRules,
@@ -114,6 +115,14 @@ router.get('/:sessionId/participants',
 router.post('/:sessionId/join',
   sessionIdParam, validate,
   ctrl.joinSession
+);
+
+// ── Poster upload ─────────────────────────────────────────────────────────────
+router.post('/upload-poster',
+  restrictTo('instructor', 'admin'),
+  requireVerified,
+  posterUpload.single('poster'),
+  ctrl.uploadPoster
 );
 
 // ── Attachments ───────────────────────────────────────────────────────────────

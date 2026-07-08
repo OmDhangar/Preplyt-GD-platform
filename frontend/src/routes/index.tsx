@@ -5,7 +5,7 @@ import { apiGet } from "@/lib/api";
 import type { Session } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CornerPillBadge } from "@/components/brand/CornerPillBadge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -43,6 +43,58 @@ const getInitials = (name: string) => {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
 
+const mentors = [
+  {
+    name: "Mr. Abhishek Rishi",
+    image: "/instructors/abhishek.png",
+    role: "Senior Engineer",
+    description: "Mercedes-Benz",
+    tags: ["Senior Engineer", "Mercedes-Benz"],
+  },
+  {
+    name: "Ms. Anjali Soni",
+    image: "/instructors/anjali.png",
+    role: "Associate Manager in Lead Export",
+    description: "Vedanta Limited - Sterlite Copper | WESCHOOL Alumni",
+    tags: ["Lead Export", "WESCHOOL"],
+  },
+  {
+    name: "Mr. Rushikesh Arande",
+    image: "/instructors/rushikesh.png",
+    role: "Sr. Manager Strategic Alliances",
+    description: "HDFC ERGO | JBIMS Alumni",
+    tags: ["Strategic Alliances", "JBIMS"],
+  },
+  {
+    name: "Mr. Yash Sipani",
+    image: "/instructors/yash.png",
+    role: "Lead Product Manager",
+    description: "NPCI | JBIMS Alumni",
+    tags: ["Product Manager", "JBIMS"],
+  },
+  {
+    name: "Mr. Medhansh Singh",
+    image: "/instructors/medhansh.png",
+    role: "Software Engineer",
+    description: "Samsung | IIT Alumni",
+    tags: ["Software Engineer", "IIT"],
+  },
+  {
+    name: "Mr. Ananth Pai",
+    image: "",
+    role: "FACTSET",
+    description: "Ex-BSE",
+    tags: ["GD Facilitation", "MBA Admissions"],
+  },
+  {
+    name: "Mr. Harsh Vakharia",
+    image: "",
+    role: "APOLLO GLOBAL",
+    description: "Financial Analyst",
+    tags: ["Leadership", "Personality"],
+  },
+];
+
 function LandingPage() {
   const { user, logout } = useAuth();
   const { accessToken } = useAuthStore();
@@ -51,6 +103,32 @@ function LandingPage() {
   const [page, setPage] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
   const limit = 3;
+
+  const [mentorIndex, setMentorIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(3);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setItemsPerView(3);
+      } else if (window.innerWidth >= 640) {
+        setItemsPerView(2);
+      } else {
+        setItemsPerView(1);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const nextMentor = () => {
+    setMentorIndex((prev) => Math.min(prev + 1, mentors.length - itemsPerView));
+  };
+
+  const prevMentor = () => {
+    setMentorIndex((prev) => Math.max(prev - 1, 0));
+  };
 
   const { data: upcomingData, isLoading: isUpcomingLoading } = useQuery({
     queryKey: ["public-upcoming-sessions", page],
@@ -103,7 +181,7 @@ function LandingPage() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link to="/" className="flex items-center gap-2.5 group">
+            <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
               <div className="h-9 w-9 rounded-full bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal shrink-0">
                 PL
               </div>
@@ -401,6 +479,12 @@ function LandingPage() {
                         </CornerPillBadge>
                       </div>
 
+                      {s.posterUrl && (
+                        <div className="w-full h-40 rounded-xl overflow-hidden mb-4 border border-white/10 shrink-0">
+                          <img src={s.posterUrl} alt={s.title} className="w-full h-full object-cover animate-fade-in" />
+                        </div>
+                      )}
+
                       <div className="space-y-1">
                         <h3 className="font-display font-bold text-xl text-white line-clamp-1">
                           {s.title}
@@ -504,54 +588,99 @@ function LandingPage() {
       </section>
 
       {/* ─── Meet Your Mentors (Swapped to be below live-gds) ─── */}
-      <section id="mentors" className="py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-16">
-          <div className="space-y-4">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
-              Meet Your Mentors
-            </h2>
-            <p className="text-text-muted-dark max-w-xl mx-auto">
-              Our sessions are moderated by seasoned facilitators and academic experts.
-            </p>
+      <section id="mentors" className="py-20 lg:py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+            <div className="space-y-4 text-left">
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+                Meet Your Mentors
+              </h2>
+              <p className="text-text-muted-dark max-w-xl">
+                Our sessions are moderated by seasoned facilitators and academic experts.
+              </p>
+            </div>
+            {/* Carousel Navigation Buttons */}
+            <div className="flex items-center gap-2 self-end">
+              <button
+                type="button"
+                onClick={prevMentor}
+                disabled={mentorIndex === 0}
+                className="p-3 rounded-xl border border-white/5 bg-surface-dark hover:border-accent-teal/40 disabled:opacity-40 disabled:hover:border-white/5 transition text-white cursor-pointer"
+                aria-label="Previous mentor"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={nextMentor}
+                disabled={mentorIndex >= mentors.length - itemsPerView}
+                className="p-3 rounded-xl border border-white/5 bg-surface-dark hover:border-accent-teal/40 disabled:opacity-40 disabled:hover:border-white/5 transition text-white cursor-pointer"
+                aria-label="Next mentor"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-surface-dark border border-white/5 rounded-2xl p-6 space-y-4 hover:border-white/10 transition text-left">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-teal overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow-glow-teal">
-                  AP
-                </div>
-                <div>
-                  <h4 className="font-display font-bold text-lg text-white">Mr.Ananth Pai</h4>
-                  <p className="text-xs text-text-muted-dark">FACTSET</p>
-                </div>
-              </div>
-              <p className="text-sm text-text-muted-dark">
-                Ex-BSE
-              </p>
-              <div className="flex gap-2">
-                <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">GD Facilitation</span>
-                <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">MBA Admissions</span>
-              </div>
-            </div>
+          <div className="relative overflow-hidden w-full px-1">
+            <div
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{
+                transform: `translateX(-${mentorIndex * (100 / itemsPerView)}%)`,
+              }}
+            >
+              {mentors.map((mentor, idx) => (
+                <div
+                  key={idx}
+                  style={{ width: `${100 / itemsPerView}%` }}
+                  className="shrink-0 px-3"
+                >
+                  <div className="bg-surface-dark/40 border border-white/5 rounded-2xl overflow-hidden hover:border-accent-teal/40 transition duration-300 shadow-xl flex flex-col h-full text-center p-6 space-y-6">
+                    {/* Avatar */}
+                    <div className="flex justify-center shrink-0">
+                      {mentor.image ? (
+                        <div className="h-28 w-28 rounded-full overflow-hidden border-2 border-accent-teal/30 bg-bg-dark shadow-lg">
+                          <img
+                            src={mentor.image}
+                            alt={mentor.name}
+                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-28 w-28 rounded-full bg-gradient-teal flex items-center justify-center text-3xl font-bold text-white shadow-glow-teal font-display shadow-lg animate-fade-in">
+                          {getInitials(mentor.name)}
+                        </div>
+                      )}
+                    </div>
 
-            <div className="bg-surface-dark border border-white/5 rounded-2xl p-6 space-y-4 hover:border-white/10 transition text-left">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-teal overflow-hidden flex items-center justify-center text-xl font-bold text-white shadow-glow-teal">
-                  HV
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="font-display font-bold text-lg text-white">
+                          {mentor.name}
+                        </h4>
+                        <p className="text-xs text-accent-teal font-semibold">
+                          {mentor.role}
+                        </p>
+                        <p className="text-sm text-text-muted-dark leading-relaxed line-clamp-3">
+                          {mentor.description}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2 flex-wrap justify-center">
+                        {mentor.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-[10px] px-2.5 py-1 rounded bg-white/5 text-white/70"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-display font-bold text-lg text-white">Mr. Harsh Vakharia</h4>
-                  <p className="text-xs text-text-muted-dark">APOLLO GLOBAL</p>
-                </div>
-              </div>
-              <p className="text-sm text-text-muted-dark">
-                Financial Analyst
-              </p>
-              <div className="flex gap-2">
-                <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Leadership</span>
-                <span className="text-[10px] px-2 py-1 rounded bg-white/5 text-white/70">Personality</span>
-              </div>
+              ))}
             </div>
           </div>
         </div>

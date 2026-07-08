@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Upload, X, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sessions/new")({
   ssr: false,
@@ -58,6 +59,7 @@ function NewSession() {
     autoCreateMeet: boolean;
     instructorId: string;
     coInstructors: string[];
+    posterUrl: string;
   }>({
     title: "",
     description: "",
@@ -72,8 +74,34 @@ function NewSession() {
     autoCreateMeet: true,
     instructorId: "",
     coInstructors: [],
+    posterUrl: "",
   });
   const [loading, setLoading] = useState(false);
+  const [posterUploading, setPosterUploading] = useState(false);
+
+  const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Poster image size must be less than 5MB");
+      return;
+    }
+
+    setPosterUploading(true);
+    const formData = new FormData();
+    formData.append("poster", file);
+
+    try {
+      const resp = await apiPost<{ posterUrl: string }>("/sessions/upload-poster", formData);
+      setForm((prev) => ({ ...prev, posterUrl: resp.posterUrl }));
+      toast.success("Poster image uploaded successfully");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to upload poster");
+    } finally {
+      setPosterUploading(false);
+    }
+  };
   const [isCoOpen, setIsCoOpen] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -165,6 +193,58 @@ function NewSession() {
           <Label htmlFor="desc">Description</Label>
           <Textarea id="desc" value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        </div>
+
+        {/* Poster Image Upload */}
+        <div className="space-y-2">
+          <Label>GD Session Poster (Optional)</Label>
+          <div className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-slate-50 transition relative min-h-[120px]">
+            {posterUploading ? (
+              <div className="flex flex-col items-center gap-2 text-text-muted-light">
+                <RefreshCw className="h-6 w-6 animate-spin text-accent-teal" />
+                <span className="text-xs font-medium">Uploading poster...</span>
+              </div>
+            ) : form.posterUrl ? (
+              <div className="relative w-full flex items-center justify-between gap-4 p-2 bg-white rounded-lg border border-hairline-light">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-md overflow-hidden bg-slate-100 border border-hairline-light shrink-0">
+                    <img src={form.posterUrl} alt="Poster preview" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-text-muted-light block">Uploaded Poster</span>
+                    <span className="text-xs font-medium text-text-on-light truncate block max-w-[250px]">
+                      {form.posterUrl.split('/').pop()}
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setForm((prev) => ({ ...prev, posterUrl: "" }))}
+                  className="h-8 w-8 p-0 text-text-muted-light hover:text-accent-red"
+                  title="Remove poster"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center gap-2 cursor-pointer w-full h-full py-4 justify-center">
+                <Upload className="h-6 w-6 text-text-muted-light" />
+                <div className="text-center">
+                  <span className="text-xs font-semibold text-accent-teal hover:underline">Upload an image</span>
+                  <span className="text-xs text-text-muted-light"> or drag and drop</span>
+                </div>
+                <span className="text-[10px] text-text-muted-light">PNG, JPG, JPEG, WEBP or GIF up to 5MB</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePosterUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
         </div>
 
         {/* Session Type */}

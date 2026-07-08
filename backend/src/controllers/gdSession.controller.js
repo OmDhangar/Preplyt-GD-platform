@@ -282,6 +282,19 @@ exports.deleteSession = asyncHandler(async (req, res, next) => {
     return next(new AppError('Cannot delete an active session. End it first.', 400));
   }
 
+  // Attempt to delete local poster from disk
+  if (session.posterUrl && session.posterUrl.includes('/posters/')) {
+    const filename = session.posterUrl.split('/posters/')[1];
+    const filePath = path.join(__dirname, '../../posters', filename);
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        // Ignore unlinking errors
+      }
+    }
+  }
+
   await session.deleteOne();
   await SessionParticipant.deleteMany({ sessionId: session._id });
 
@@ -609,6 +622,16 @@ exports.getAttachments = asyncHandler(async (req, res, next) => {
   // Admins can always view
 
   success(res, { attachments: session.attachments, total: session.attachments.length });
+});
+
+// ── POST /api/sessions/upload-poster ──────────────────────────────────────────
+exports.uploadPoster = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError('No poster file uploaded.', 400));
+  }
+
+  const posterUrl = `${req.protocol}://${req.get('host')}/posters/${req.file.filename}`;
+  success(res, { posterUrl }, 'Poster uploaded successfully');
 });
 
 // ══════════════════════════════════════════════════════════════════════════════

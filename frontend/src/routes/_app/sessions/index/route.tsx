@@ -119,6 +119,11 @@ function SessionsList() {
                 className="bg-white border rounded-2xl p-4 flex flex-col justify-between hover:border-accent-teal/40 transition shadow-elegant"
               >
                 <div className="space-y-3">
+                  {s.posterUrl && (
+                    <div className="w-full h-32 rounded-xl overflow-hidden mb-3 border border-hairline-light shrink-0">
+                      <img src={s.posterUrl} alt={s.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-display font-semibold text-base line-clamp-1">
                       {s.title}
@@ -257,6 +262,11 @@ function SessionsList() {
               className="bg-white border rounded-2xl p-4 hover:border-accent-teal/40 transition shadow-elegant flex flex-col justify-between"
             >
               <div className="space-y-3">
+                {s.posterUrl && (
+                  <div className="w-full h-32 rounded-xl overflow-hidden mb-3 border border-hairline-light shrink-0">
+                    <img src={s.posterUrl} alt={s.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display font-semibold text-base line-clamp-2">

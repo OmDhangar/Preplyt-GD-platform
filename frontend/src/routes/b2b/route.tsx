@@ -108,7 +108,7 @@ function B2bPage() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link to="/" className="flex items-center gap-2.5 group">
+            <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
               <div className="h-9 w-9 rounded-full bg-gradient-teal flex items-center justify-center font-display text-base font-bold text-white shadow-glow-teal shrink-0">
                 PL
               </div>

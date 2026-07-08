@@ -109,7 +109,15 @@ app.get('/health', (req, res) => {
 
 // ── Serve uploads folder statically ───────────────────────────────────────────
 const path = require('path');
+const fs = require('fs');
+
+const postersDir = path.join(__dirname, '../posters');
+if (!fs.existsSync(postersDir)) {
+  fs.mkdirSync(postersDir, { recursive: true });
+}
+
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/posters', express.static(postersDir));
 
 // ── API routes ─────────────────────────────────────────────────────────────────
 app.use('/api', routes);

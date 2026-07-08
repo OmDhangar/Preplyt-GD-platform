@@ -37,6 +37,9 @@ const createSessionRules = [
     .isArray().withMessage('coInstructors must be an array of instructor IDs')
     .custom((ids) => ids.every((id) => /^[a-fA-F0-9]{24}$/.test(id)))
     .withMessage('All coInstructors must be valid MongoDB ObjectIds'),
+  body('posterUrl')
+    .optional({ checkFalsy: true })
+    .isString().withMessage('posterUrl must be a string'),
 ];
 
 const updateSessionRules = [
