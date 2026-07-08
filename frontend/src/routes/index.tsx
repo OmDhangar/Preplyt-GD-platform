@@ -95,6 +95,39 @@ const mentors = [
   },
 ];
 
+const testimonials = [
+  {
+    name: "Rohan Sharma",
+    college: "Welingkar Institute of Management, Mumbai",
+    quote: "The Mock GD was extremely practical and the personalized feedback helped me understand exactly what I needed to improve before placements.",
+    rating: 5,
+  },
+  {
+    name: "Priya Patel",
+    college: "K J Somaiya Institute of Management",
+    quote: "Unlike generic webinars, this session was interactive and every participant received actionable feedback. It genuinely boosted my confidence.",
+    rating: 5,
+  },
+  {
+    name: "Amit Verma",
+    college: "LBSIM, New Delhi",
+    quote: "The mentor’s perspective on interviews and GDs was something I hadn’t experienced before. It felt like actual placement preparation.",
+    rating: 5,
+  },
+  {
+    name: "Sneha Iyer",
+    college: "NMIMS Mumbai",
+    quote: "The mock interview highlighted small mistakes that could have cost me during placements. The feedback was specific and immediately useful.",
+    rating: 5,
+  },
+  {
+    name: "Divya Nair",
+    college: "IIM Student",
+    quote: "The structured feedback after the GD was the biggest differentiator. I left with a clear roadmap instead of generic advice.",
+    rating: 5,
+  },
+];
+
 function LandingPage() {
   const { user, logout } = useAuth();
   const { accessToken } = useAuthStore();
@@ -105,6 +138,7 @@ function LandingPage() {
   const limit = 3;
 
   const [mentorIndex, setMentorIndex] = useState(0);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(3);
 
   useEffect(() => {
@@ -128,6 +162,14 @@ function LandingPage() {
 
   const prevMentor = () => {
     setMentorIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const nextTestimonial = () => {
+    setTestimonialIndex((prev) => Math.min(prev + 1, testimonials.length - itemsPerView));
+  };
+
+  const prevTestimonial = () => {
+    setTestimonialIndex((prev) => Math.max(prev - 1, 0));
   };
 
   const { data: upcomingData, isLoading: isUpcomingLoading } = useQuery({
@@ -196,6 +238,7 @@ function LandingPage() {
             <Link to="/b2b" className="hover:text-text-on-dark transition">For Institutes</Link>
             <a href="#how-it-works" className="hover:text-text-on-dark transition">How it works</a>
             <a href="#mentors" className="hover:text-text-on-dark transition">Meet Mentors</a>
+            <a href="#testimonials" className="hover:text-text-on-dark transition">Testimonials</a>
             <a href="#faq" className="hover:text-text-on-dark transition">FAQ</a>
           </nav>
           <div className="flex items-center gap-3">
@@ -267,6 +310,7 @@ function LandingPage() {
                 <Link to="/b2b" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">For Institutes</Link>
                 <a href="#how-it-works" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">How it works</a>
                 <a href="#mentors" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">Meet Mentors</a>
+                <a href="#testimonials" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">Testimonials</a>
                 <a href="#faq" onClick={() => setMenuOpen(false)} className="hover:text-text-on-dark transition">FAQ</a>
               </nav>
             </div>
@@ -364,22 +408,14 @@ function LandingPage() {
 
       {/* ─── Stats Bar ─── */}
       <section className="bg-surface-dark border-y border-white/5 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div className="space-y-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center gap-12 sm:gap-24 text-center">
+          <div className="space-y-1 min-w-[150px]">
             <div className="text-4xl font-extrabold text-white">500+</div>
             <div className="text-xs text-text-muted-dark uppercase tracking-wider font-semibold">Active Students</div>
           </div>
-          <div className="space-y-1">
-            <div className="text-4xl font-extrabold text-white">280+</div>
-            <div className="text-xs text-text-muted-dark uppercase tracking-wider font-semibold">GD Rounds Completed</div>
-          </div>
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-[150px]">
             <div className="text-4xl font-extrabold text-white">4.9★</div>
             <div className="text-xs text-text-muted-dark uppercase tracking-wider font-semibold">Mentor Ratings</div>
-          </div>
-          <div className="space-y-1">
-            <div className="text-4xl font-extrabold text-white">1074+</div>
-            <div className="text-xs text-text-muted-dark uppercase tracking-wider font-semibold">Performance Reports</div>
           </div>
         </div>
       </section>
@@ -676,6 +712,95 @@ function LandingPage() {
                             {tag}
                           </span>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Testimonials Section ─── */}
+      <section id="testimonials" className="py-20 bg-surface-dark/10 border-t border-white/5 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+            <div className="space-y-4 text-left">
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+                Loved by Students
+              </h2>
+              <p className="text-text-muted-dark max-w-xl">
+                See how PrepLyt has helped students crack their group discussions and placement interviews.
+              </p>
+            </div>
+            {/* Carousel Navigation Buttons */}
+            <div className="flex items-center gap-2 self-end">
+              <button
+                type="button"
+                onClick={prevTestimonial}
+                disabled={testimonialIndex === 0}
+                className="p-3 rounded-xl border border-white/5 bg-surface-dark hover:border-accent-teal/40 disabled:opacity-40 disabled:hover:border-white/5 transition text-white cursor-pointer"
+                aria-label="Previous testimonial"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={nextTestimonial}
+                disabled={testimonialIndex >= testimonials.length - itemsPerView}
+                className="p-3 rounded-xl border border-white/5 bg-surface-dark hover:border-accent-teal/40 disabled:opacity-40 disabled:hover:border-white/5 transition text-white cursor-pointer"
+                aria-label="Next testimonial"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden w-full px-1">
+            <div
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{
+                transform: `translateX(-${testimonialIndex * (100 / itemsPerView)}%)`,
+              }}
+            >
+              {testimonials.map((t, idx) => (
+                <div
+                  key={idx}
+                  style={{ width: `${100 / itemsPerView}%` }}
+                  className="shrink-0 px-3"
+                >
+                  <div className="bg-surface-dark/40 border border-white/5 rounded-2xl overflow-hidden hover:border-accent-teal/40 transition duration-300 shadow-xl flex flex-col h-full text-center p-6 space-y-6">
+                    {/* Avatar */}
+                    <div className="flex justify-center shrink-0">
+                      <div className="h-20 w-20 rounded-full bg-gradient-teal flex items-center justify-center text-xl font-bold text-white shadow-glow-teal font-display shadow-lg">
+                        {getInitials(t.name)}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <h4 className="font-display font-bold text-lg text-white">
+                            {t.name}
+                          </h4>
+                          <p className="text-xs text-accent-teal font-semibold">
+                            {t.college}
+                          </p>
+                        </div>
+
+                        {/* Stars */}
+                        <div className="flex justify-center items-center gap-1 text-amber-500">
+                          {[...Array(t.rating)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 fill-amber-500 stroke-none" />
+                          ))}
+                        </div>
+
+                        {/* Quote */}
+                        <p className="text-sm text-text-muted-dark leading-relaxed italic">
+                          "{t.quote}"
+                        </p>
                       </div>
                     </div>
                   </div>
