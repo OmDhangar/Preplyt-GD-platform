@@ -475,8 +475,8 @@ function B2bPage() {
 
                 <div className="text-center text-xs text-text-muted-dark mt-4">
                   Or contact us directly at{" "}
-                  <a href="mailto:preplyt1@gmail.com" className="text-accent-teal hover:text-accent-teal-bright transition underline">
-                    preplyt1@gmail.com
+                  <a href="mailto:raj@preplyt.com" className="text-accent-teal hover:text-accent-teal-bright transition underline">
+                    raj@preplyt.com
                   </a>
                 </div>
               </form>
