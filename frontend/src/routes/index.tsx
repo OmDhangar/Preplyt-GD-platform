@@ -410,11 +410,11 @@ function LandingPage() {
       <section className="bg-surface-dark border-y border-white/5 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-center gap-12 sm:gap-24 text-center">
           <div className="space-y-1 min-w-[150px]">
-            <div className="text-4xl font-extrabold text-white">500+</div>
+            <div className="text-4xl font-extrabold text-white">400+</div>
             <div className="text-xs text-text-muted-dark uppercase tracking-wider font-semibold">Active Students</div>
           </div>
           <div className="space-y-1 min-w-[150px]">
-            <div className="text-4xl font-extrabold text-white">4.9★</div>
+            <div className="text-4xl font-extrabold text-white">4.8★</div>
             <div className="text-xs text-text-muted-dark uppercase tracking-wider font-semibold">Mentor Ratings</div>
           </div>
         </div>
