@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiGet } from "@/lib/api";
 import type { Session } from "@/lib/types";
@@ -854,21 +855,7 @@ function LandingPage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-white/5 bg-bg-dark py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-gradient-teal flex items-center justify-center font-display text-sm font-bold text-white shadow-glow-teal">
-              PL
-            </div>
-            <span className="font-display font-bold text-base tracking-tight text-white">
-              Prep<span className="text-gradient-teal font-extrabold">Lyt</span>
-            </span>
-          </div>
-          <div className="text-xs text-text-muted-dark font-medium">
-            © {new Date().getFullYear()} PrepLyt. All rights reserved. Moderated live group discussion software.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
